@@ -1,10 +1,11 @@
 services:
   - type: web
     name: nitzutz-backend
-    runtime: node
+    runtime: docker
+    region: frankfurt
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npm run start
+    dockerfilePath: ./Dockerfile
+    dockerContext: ./
     plan: free
     envVars:
       - key: DATABASE_URL
