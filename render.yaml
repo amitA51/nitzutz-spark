@@ -1,4 +1,5 @@
 services:
+  # Backend API Service
   - type: web
     name: nitzutz-backend
     runtime: node
@@ -19,3 +20,15 @@ services:
         value: https://router.huggingface.co/v1
       - key: AI_MODEL
         value: deepseek-ai/DeepSeek-V3.2-Exp:novita
+
+  # Frontend Static Site
+  - type: web
+    name: nitzutz-frontend
+    runtime: static
+    region: frankfurt
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    plan: free
+    envVars:
+      - key: VITE_API_URL
+        value: https://nitzutz-backend.onrender.com/api

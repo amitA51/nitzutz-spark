@@ -20,9 +20,10 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 const allowedOrigins = [
-  'http://localhost:5173',
-  process.env.FRONTEND_URL || 'https://nitzutz-spark.netlify.app'
-];
+  'http://localhost:5173', // Local development
+  'https://nitzutz-frontend.onrender.com', // Production frontend
+  process.env.FRONTEND_URL, // Optional custom URL
+].filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
