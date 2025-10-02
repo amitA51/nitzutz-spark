@@ -26,9 +26,14 @@ services:
     name: nitzutz-frontend
     runtime: static
     region: frankfurt
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: ./frontend/dist
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     plan: free
     envVars:
       - key: VITE_API_URL
-        value: https://nitzutz-backend-production-64f3.up.railway.app/
+        value: https://nitzutz-backend.onrender.com/api
