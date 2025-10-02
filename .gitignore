@@ -49,8 +49,9 @@ lerna-debug.log*
 *.sqlite3
 
 # Prisma
-backend/prisma/migrations/
 backend/prisma/dev.db
+backend/prisma/*.db
+backend/prisma/*.db-journal
 
 # OS files
 Thumbs.db
