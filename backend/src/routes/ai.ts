@@ -1,13 +1,24 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { createAIClient, chatCompletion } from '../services/aiClient';
+import { createAIClient, chatCompletion, isAIEnabled } from '../services/aiClient';
 
 const router = Router();
 const prisma = new PrismaClient();
 const ai = createAIClient();
 
+// Middleware to check if AI is enabled
+function requireAI(req: Request, res: Response, next: any) {
+  if (!isAIEnabled()) {
+    return res.status(503).json({ 
+      error: 'AI features are not available', 
+      message: 'AI_API_KEY is not configured. Please contact administrator.' 
+    });
+  }
+  next();
+}
+
 // Ask a question about an article
-router.post('/ask', async (req: Request, res: Response) => {
+router.post('/ask', requireAI, async (req: Request, res: Response) => {
   try {
     const { articleId, question, model, mode } = req.body;
     
@@ -93,7 +104,7 @@ router.delete('/questions/:id', async (req: Request, res: Response) => {
 });
 
 // Extract key takeaways from an article
-router.post('/extract-key-points', async (req: Request, res: Response) => {
+router.post('/extract-key-points', requireAI, async (req: Request, res: Response) => {
   try {
     const { articleId } = req.body;
     
@@ -144,7 +155,7 @@ router.post('/extract-key-points', async (req: Request, res: Response) => {
 });
 
 // Find connections between current article and user's knowledge base
-router.post('/find-connections', async (req: Request, res: Response) => {
+router.post('/find-connections', requireAI, async (req: Request, res: Response) => {
   try {
     const { articleId } = req.body;
     
@@ -234,7 +245,7 @@ router.get('/concept-cloud', async (_req: Request, res: Response) => {
 });
 
 // Test AI connectivity using server-side configuration
-router.post('/test-connection', async (_req: Request, res: Response) => {
+router.post('/test-connection', requireAI, async (_req: Request, res: Response) => {
   try {
     const completion = await chatCompletion(ai, process.env.AI_MODEL || 'deepseek-ai/DeepSeek-V3.2-Exp:novita', [
       { role: 'user', content: 'ping' },
