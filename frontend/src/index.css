@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-background text-foreground;
+  }
+  
+  body {
+    @apply font-google-sans bg-background text-foreground;
+    margin: 0;
+    min-height: 100vh;
+  }
+  
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-dark;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-light rounded;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-medium;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-medium hover:bg-gray-light text-white px-4 py-2 rounded-lg transition-colors;
+  }
+  
+  .card {
+    @apply bg-gray-dark rounded-lg p-6 border border-gray-light;
+  }
+  
+  .input {
+    @apply bg-gray-medium border border-gray-light rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary;
+  }
+}

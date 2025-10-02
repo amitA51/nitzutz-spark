@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Personal Library Models
+model Book {
+  id          String    @id @default(cuid())
+  bookTitle   String
+  currentPage Int       @default(0)
+  totalPages  Int?
+  author      String?
+  isbn        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  summaries   Summary[]
+}
+
+model Summary {
+  id            String   @id @default(cuid())
+  bookId        String
+  book          Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  content       String   // Rich text content
+  chapterNumber Int?
+  chapterTitle  String?
+  pageRange     String?  // e.g., "20-45"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Discovery Engine Models
+model Article {
+  id           String         @id @default(cuid())
+  title        String
+  content      String
+  author       String?
+  sourceUrl    String?
+  category     String
+  publishedAt  DateTime?
+  imageUrl     String?
+  excerpt      String?        // Short preview text
+  readTime     Int?           // Estimated read time in minutes
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  savedArticles SavedArticle[]
+  aiQuestions  AiQuestion[]
+}
+
+model SavedArticle {
+  id                 String              @id @default(cuid())
+  articleId          String
+  article            Article             @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  notes              String?             // User's personal notes
+  tags               String?             // Comma-separated tags
+  savedAt            DateTime            @default(now())
+  spacedRepetitions  SpacedRepetition[]
+  
+  @@unique([articleId]) // Each article can only be saved once
+}
+
+// Spaced Repetition for long-term retention
+model SpacedRepetition {
+  id              String        @id @default(cuid())
+  savedArticleId  String
+  savedArticle    SavedArticle  @relation(fields: [savedArticleId], references: [id], onDelete: Cascade)
+  scheduledFor    DateTime      // When to show the reminder
+  completed       Boolean       @default(false)
+  completedAt     DateTime?
+  interval        Int           // Days: 3, 7, 30, etc.
+  keyPoints       String        // JSON array of key points to review
+  createdAt       DateTime      @default(now())
+}
+
+model AiQuestion {
+  id         String   @id @default(cuid())
+  articleId  String
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  question   String
+  answer     String
+  context    String?  // Relevant excerpt from the article
+  createdAt  DateTime @default(now())
+}
+
+// Concept tracking for knowledge graph
+model ConceptMention {
+  id         String   @id @default(cuid())
+  concept    String   // The concept/term (e.g., "cognitive dissonance")
+  articleId  String?  // If mentioned in an article
+  bookId     String?  // If mentioned in a book
+  context    String?  // Surrounding text
+  createdAt  DateTime @default(now())
+  
+  @@index([concept])
+}
+
+// User Settings Model
+model UserSettings {
+  id              String   @id @default(cuid())
+  aiApiKey        String?  // Encrypted API key
+  aiProvider      String   @default("openai") // openai, anthropic, etc.
+  googleDriveAuth String?  // OAuth tokens (encrypted)
+  theme           String   @default("dark")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([id]) // Single user app
+}
