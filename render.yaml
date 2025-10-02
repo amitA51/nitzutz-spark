@@ -36,4 +36,4 @@ services:
     plan: free
     envVars:
       - key: VITE_API_URL
-        value: https://nitzutz-backend.onrender.com/api
+        value: https://nitzutz-backend-production-64f3.up.railway.app/api
