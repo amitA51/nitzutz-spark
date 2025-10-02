@@ -5,7 +5,7 @@
   "scripts": {
     "install:backend": "npm --prefix backend install",
     "build": "npm --prefix backend install && npm --prefix backend run prisma:generate && npm --prefix backend run build",
-    "start": "npm --prefix backend run start",
+    "start": "npm --prefix backend run prisma:migrate:deploy && npm --prefix backend run start",
     "dev": "npm --prefix backend run dev"
   }
 }
