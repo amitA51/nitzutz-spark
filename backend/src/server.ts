@@ -21,9 +21,8 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 const allowedOrigins = [
   'http://localhost:5173', // Local development
-  'https://nitzutz-frontend.onrender.com', // Production frontend (Render)
-  'https://nitzutz-backend-production-64f3.up.railway.app', // Backend on Railway
-  process.env.FRONTEND_URL, // Optional custom URL
+  'https://nitzutz-spark.netlify.app', // Production frontend (Netlify)
+  process.env.FRONTEND_URL, // Optional custom URL from Railway
 ].filter(Boolean);
 
 app.use(cors({
