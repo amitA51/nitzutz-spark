@@ -1,15 +1,14 @@
 services:
   - type: web
     name: nitzutz-backend
-    runtime: docker
+    runtime: node
     region: frankfurt
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
-    dockerContext: ./
+    buildCommand: npm run build
+    startCommand: npm run start
     plan: free
     envVars:
       - key: DATABASE_URL
-        value: file:./prod.db
+        value: file:./backend/prod.db
       - key: PORT
         value: 5000
       - key: NODE_ENV
