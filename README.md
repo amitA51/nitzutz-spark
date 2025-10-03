@@ -95,6 +95,14 @@ The frontend will run on http://localhost:5173
 ```env
 DATABASE_URL="file:./dev.db"
 PORT=5000
+NODE_ENV=development
+
+# AI Configuration
+AI_API_KEY=your_huggingface_api_key
+AI_BASE_URL=https://router.huggingface.co/v1
+AI_MODEL=deepseek-ai/DeepSeek-V3.2-Exp:novita
+
+# Google Drive (Coming in Stage 3)
 GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 GOOGLE_REDIRECT_URI=http://localhost:5000/auth/google/callback
@@ -102,7 +110,11 @@ GOOGLE_REDIRECT_URI=http://localhost:5000/auth/google/callback
 
 ### Frontend (.env)
 ```env
+# Local development
 VITE_API_URL=http://localhost:5000/api
+
+# Or point to production backend
+# VITE_API_URL=https://your-backend.railway.app/api
 ```
 
 ## Project Structure
@@ -195,6 +207,18 @@ This is a personal project, but suggestions and improvements are welcome. Please
 ## License
 
 This project is for personal use. Please contact the author for any other use cases.
+
+## Deployment
+
+### Current Setup
+- **Backend**: Railway (https://railway.app)
+- **Frontend**: Netlify (https://netlify.com)
+
+### Seed Articles
+After deployment, seed initial articles:
+```bash
+curl -X POST https://your-backend-url.railway.app/api/articles/seed
+```
 
 ## Support
 
