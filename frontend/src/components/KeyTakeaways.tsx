@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import axios from 'axios';
 
 interface KeyTakeawaysProps {
@@ -21,7 +22,36 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
         const response = await axios.post(`${import.meta.env.VITE_API_URL}/ai/extract-key-points`, {
           articleId,
         });
-        setKeyPoints(response.data.keyPoints || []);
+        let points: string[] = response.data.keyPoints || [];
+
+        // If backend returned a single JSON-like string, try to parse it
+        if (points.length === 1 && typeof points[0] === 'string' && /\[.*\]/s.test(points[0])) {
+          try {
+            const parsed = JSON.parse(points[0]);
+            if (Array.isArray(parsed)) {
+              points = parsed;
+            }
+          } catch {}
+        }
+
+        // Sanitize each point to remove code fences, brackets and quotes
+        const cleaned = points
+          .filter((p: any) => typeof p === 'string')
+          .map((p: string) => {
+            let s = p
+              .replace(/```json/gi, '')
+              .replace(/```/g, '')
+              .replace(/^\s*\[|\]\s*$/g, '')
+              .replace(/^[\s,]*(?:-|\*|•|\d+\.|–|—)\s*/, '')
+              .replace(/^"+|"+$/g, '')
+              .trim();
+            // Remove stray JSON markers
+            if (/^json$/i.test(s) || s === '[' || s === ']') return '';
+            return s;
+          })
+          .filter(Boolean) as string[];
+
+        setKeyPoints(cleaned);
       } catch (err: any) {
         console.error('Error fetching key takeaways:', err);
         setError('Failed to load key takeaways');
@@ -35,21 +65,33 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
 
   if (loading) {
     return (
-      <div className="bg-gray-dark rounded-lg p-6 border border-gray-light">
-        <h3 className="text-lg font-semibold mb-4 text-primary">🔑 Key Takeaways</h3>
+      <motion.div 
+        className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+      >
+        <h3 className="text-lg font-semibold mb-4 text-gradient font-sans">🔑 נקודות מפתח</h3>
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          <motion.div 
+            className="rounded-full h-8 w-8 border-2 border-primary border-t-transparent"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          />
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-gray-dark rounded-lg p-6 border border-gray-light">
-        <h3 className="text-lg font-semibold mb-4 text-primary">🔑 Key Takeaways</h3>
-        <p className="text-sm text-gray-400">{error}</p>
-      </div>
+      <motion.div 
+        className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        <h3 className="text-lg font-semibold mb-4 text-gradient font-sans">🔑 נקודות מפתח</h3>
+        <p className="text-sm text-red-400 font-serif">❌ {error}</p>
+      </motion.div>
     );
   }
 
@@ -58,21 +100,39 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
   }
 
   return (
-    <div className="bg-gray-dark rounded-lg p-6 border border-gray-light">
-      <h3 className="text-lg font-semibold mb-4 text-primary">🔑 Key Takeaways</h3>
+    <motion.div 
+      className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
+    >
+      <motion.h3 
+        className="text-lg font-semibold mb-4 text-gradient font-sans"
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+      >
+        🔑 נקודות מפתח
+      </motion.h3>
       <ul className="space-y-3">
         {keyPoints.map((point, index) => (
-          <li key={index} className="flex items-start">
-            <span className="text-primary font-bold mr-3 mt-0.5 flex-shrink-0">
-              {index + 1}.
+          <motion.li 
+            key={index} 
+            className="flex items-start"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileHover={{ x: 5 }}
+          >
+            <span className="bg-gradient-accent text-white font-bold rounded-full w-6 h-6 flex items-center justify-center ml-3 mt-0.5 flex-shrink-0 text-xs">
+              {index + 1}
             </span>
-            <span className="text-sm text-gray-300 leading-relaxed">
+            <span className="text-sm text-gray-300 leading-relaxed font-serif">
               {point.replace(/^[-•*]\s*/, '').replace(/^"\s*|\s*"$/g, '')}
             </span>
-          </li>
+          </motion.li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 };
 

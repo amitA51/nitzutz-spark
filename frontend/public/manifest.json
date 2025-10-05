@@ -1,0 +1,34 @@
+{
+  "short_name": "ניצוץ",
+  "name": "ניצוץ - הצת את הלמידה שלך",
+  "description": "אפליקציה ללמידה חכמה וניהול ידע אישי",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#121212",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "he",
+  "categories": ["education", "productivity"],
+  "features": [
+    "עיבוד טקסט חכם",
+    "ייבוא מ-Google Drive",
+    "למידה חוזרת במרווחים",
+    "חיפוש סמנטי מתקדם"
+  ]
+}

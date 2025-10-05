@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db';
+import { trackActivity } from '../services/activityTracker';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Get all summaries for a book
 router.get('/book/:bookId', async (req: Request, res: Response) => {
@@ -61,7 +61,14 @@ router.post('/', async (req: Request, res: Response) => {
         pageRange,
       },
     });
-    
+    // Track summary creation
+    await trackActivity({
+      action: 'summary_created',
+      targetType: 'summary',
+      targetId: summary.id,
+      metadata: { bookId },
+    });
+
     res.status(201).json(summary);
   } catch (error) {
     console.error('Error creating summary:', error);

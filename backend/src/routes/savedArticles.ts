@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../db';
+import { trackActivity } from '../services/activityTracker';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Get all saved articles
 router.get('/', async (req: Request, res: Response) => {
@@ -59,6 +59,12 @@ router.post('/', async (req: Request, res: Response) => {
       include: {
         article: true,
       },
+    });
+    // Track save action
+    await trackActivity({
+      action: 'article_saved',
+      targetType: 'article',
+      targetId: articleId,
     });
     
     res.status(201).json(savedArticle);

@@ -1,130 +1,102 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import PageTransition from '../components/PageTransition';
 import ArticleCard from '../components/ArticleCard';
 import KeyTakeaways from '../components/KeyTakeaways';
 import ConnectionsSidebar from '../components/ConnectionsSidebar';
 import SpacedRepetitionPrompt from '../components/SpacedRepetitionPrompt';
-import axios from 'axios';
+import { articlesAPI, type Article } from '../api/articles';
+import { savedArticlesAPI } from '../api/savedArticles';
+import apiClient from '../api/client';
 
-interface Article {
-  id: string;
-  title: string;
-  content: string;
-  author?: string;
-  category: string;
-  excerpt?: string;
-  readTime?: number;
-  imageUrl?: string;
-  isSaved: boolean;
-}
+// Using Article type from API layer
 
 const DiscoveryPage = () => {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [categories, setCategories] = useState<string[]>(['all']);
-  const [loading, setLoading] = useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [deckArticles, setDeckArticles] = useState<Article[]>([]);
   const [aiQuestion, setAiQuestion] = useState('');
   const [aiResponses, setAiResponses] = useState<any[]>([]);
   const [devilsAdvocateMode, setDevilsAdvocateMode] = useState(false);
   const [showRepetitionPrompt, setShowRepetitionPrompt] = useState(false);
   const [repetitionArticle, setRepetitionArticle] = useState<{ id: string; title: string } | null>(null);
+  const [sessionSaved, setSessionSaved] = useState<Article[]>([]);
 
+  // Queries
+  const categoriesQuery = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => articlesAPI.getCategories(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const articlesQuery = useQuery({
+    queryKey: ['articles', selectedCategory],
+    queryFn: () => articlesAPI.getAll(1, 20, selectedCategory !== 'all' ? selectedCategory : undefined),
+  });
+
+  const categories = useMemo(() => ['all', ...(categoriesQuery.data || [])], [categoriesQuery.data]);
+  const articles = articlesQuery.data?.articles || [];
+
+  // Reset deck on data change
   useEffect(() => {
-    fetchArticles();
-    fetchCategories();
-  }, [selectedCategory]);
+    setDeckArticles(articles);
+    setCurrentIndex(0);
+    setSessionSaved([]);
+  }, [articles]);
 
-  const fetchArticles = async () => {
+  const handleSaveArticle = useCallback(async () => {
+    const article = deckArticles[currentIndex];
+    if (!article) return;
     try {
-      setLoading(true);
-      const params = selectedCategory !== 'all' ? { category: selectedCategory } : {};
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/articles`, { params });
-      setArticles(response.data.articles || []);
-      setCurrentIndex(0);
-    } catch (error) {
-      console.error('Error fetching articles:', error);
-      // Use dummy data for demo
-      setArticles([
-        {
-          id: '1',
-          title: 'The Future of Artificial Intelligence',
-          content: 'Artificial intelligence continues to evolve at a rapid pace...',
-          author: 'Dr. Sarah Johnson',
-          category: 'Technology',
-          excerpt: 'Exploring the latest developments in AI and their implications.',
-          readTime: 8,
-          isSaved: false,
-        },
-        {
-          id: '2',
-          title: 'Understanding Quantum Computing',
-          content: 'Quantum computing represents a fundamental shift in how we process information...',
-          author: 'Prof. Michael Chen',
-          category: 'Science',
-          excerpt: 'A beginner-friendly introduction to quantum computing concepts.',
-          readTime: 12,
-          isSaved: false,
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/articles/categories/list`);
-      setCategories(['all', ...response.data]);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      setCategories(['all', 'Technology', 'Science', 'Philosophy', 'Environment', 'Mathematics']);
-    }
-  };
-
-  const handleSaveArticle = async () => {
-    if (!articles[currentIndex]) return;
-    
-    try {
-      const article = articles[currentIndex];
       if (article.isSaved) {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/saved-articles/${article.id}`);
-        // Update local state
-        const updatedArticles = [...articles];
-        updatedArticles[currentIndex] = { ...article, isSaved: false };
-        setArticles(updatedArticles);
+        await savedArticlesAPI.remove(article.id);
+        const updated = [...deckArticles];
+        updated[currentIndex] = { ...article, isSaved: false };
+        setDeckArticles(updated);
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/saved-articles`, {
-          articleId: article.id,
-        });
-        // Update local state
-        const updatedArticles = [...articles];
-        updatedArticles[currentIndex] = { ...article, isSaved: true };
-        setArticles(updatedArticles);
-        
-        // Show spaced repetition prompt
+        await savedArticlesAPI.save(article.id);
+        const updated = [...deckArticles];
+        updated[currentIndex] = { ...article, isSaved: true };
+        setDeckArticles(updated);
+        setSessionSaved(prev => [updated[currentIndex], ...prev]);
         setRepetitionArticle({ id: article.id, title: article.title });
         setShowRepetitionPrompt(true);
       }
     } catch (error) {
       console.error('Error saving article:', error);
     }
-  };
+  }, [deckArticles, currentIndex]);
+
+  // Keyboard shortcuts: Left/Right for navigation, S to save
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        setCurrentIndex(i => Math.min(deckArticles.length - 1, i + 1));
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentIndex(i => Math.max(0, i - 1));
+      } else if (e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSaveArticle();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [deckArticles.length, handleSaveArticle]);
 
   const handleAskAI = async () => {
-    if (!aiQuestion.trim() || !articles[currentIndex]) return;
-    
+    const article = deckArticles[currentIndex];
+    if (!aiQuestion.trim() || !article) return;
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/ai/ask`, {
-        articleId: articles[currentIndex].id,
+      const response = await apiClient.post('/ai/ask', {
+        articleId: article.id,
         question: aiQuestion,
         mode: devilsAdvocateMode ? 'devils-advocate' : 'normal',
+        categoryHint: selectedCategory !== 'all' ? selectedCategory : undefined,
       });
-      
       setAiResponses([response.data, ...aiResponses]);
       setAiQuestion('');
     } catch (error) {
-      console.error('Error asking AI:', error);
-      // Mock response for demo
       setAiResponses([
         {
           question: aiQuestion,
@@ -137,9 +109,30 @@ const DiscoveryPage = () => {
     }
   };
 
-  const currentArticle = articles[currentIndex];
+  // Swipe deck setup
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 0, 200], [-10, 0, 10]);
+  const showSave = useTransform(x, [80, 160], [0, 1]);
+  const showSkip = useTransform(x, [-80, -160], [0, 1]);
+
+  const onDragEnd = (_: any, info: PanInfo) => {
+    const threshold = 140;
+    if (info.offset.x > threshold) {
+      handleSaveArticle();
+      setCurrentIndex(i => Math.min(deckArticles.length, i + 1));
+      x.set(0);
+    } else if (info.offset.x < -threshold) {
+      setCurrentIndex(i => Math.min(deckArticles.length, i + 1));
+      x.set(0);
+    } else {
+      x.set(0);
+    }
+  };
+
+  const currentArticle = deckArticles[currentIndex];
 
   return (
+    <PageTransition>
     <div className="max-w-7xl mx-auto">
       {/* Spaced Repetition Prompt Modal */}
       {showRepetitionPrompt && repetitionArticle && (
@@ -161,9 +154,9 @@ const DiscoveryPage = () => {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-lg transition-colors ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
                     selectedCategory === cat
-                      ? 'bg-primary text-white'
+                      ? 'bg-gradient-accent text-white shadow-md'
                       : 'bg-gray-medium hover:bg-gray-light text-gray-300'
                   }`}
                 >
@@ -173,14 +166,48 @@ const DiscoveryPage = () => {
             </div>
           </div>
 
-          {/* Article Display */}
-          {loading ? (
+          {/* Article Display: Deck */}
+          {articlesQuery.isLoading ? (
             <div className="flex items-center justify-center h-96">
               <p className="text-gray-400">Loading articles...</p>
             </div>
           ) : currentArticle ? (
             <>
-              <ArticleCard article={currentArticle} />
+              {/* Deck stack */}
+              <div className="relative h-[28rem]">
+                {deckArticles.slice(currentIndex, currentIndex + 3).map((a, idx) => (
+                  <motion.div
+                    key={a.id}
+                    className="absolute inset-0"
+                    style={
+                      idx === 0
+                        ? { zIndex: 10 - idx, y: idx * 10, scale: 1 - idx * 0.04, x, rotate }
+                        : { zIndex: 10 - idx, y: idx * 10, scale: 1 - idx * 0.04 }
+                    }
+                    drag={idx === 0 ? 'x' : undefined}
+                    dragConstraints={idx === 0 ? { left: 0, right: 0 } : undefined}
+                    onDragEnd={idx === 0 ? onDragEnd : undefined}
+                  >
+                    <ArticleCard article={a} />
+                    {idx === 0 && (
+                      <>
+                        <motion.div
+                          className="absolute top-4 left-4 text-gradient font-bold text-lg font-sans"
+                          style={{ opacity: showSave }}
+                        >
+                          SAVE
+                        </motion.div>
+                        <motion.div
+                          className="absolute top-4 right-4 text-gray-400 font-bold text-lg"
+                          style={{ opacity: showSkip }}
+                        >
+                          SKIP
+                        </motion.div>
+                      </>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
               
               {/* Navigation Controls */}
               <div className="mt-6 flex items-center justify-between">
@@ -193,13 +220,13 @@ const DiscoveryPage = () => {
                 </button>
                 
                 <span className="text-gray-400">
-                  {currentIndex + 1} / {articles.length}
+                  {currentIndex + 1} / {deckArticles.length}
                 </span>
                 
                 <button
-                  onClick={() => setCurrentIndex(Math.min(articles.length - 1, currentIndex + 1))}
-                  disabled={currentIndex === articles.length - 1}
-                  className={`btn-secondary ${currentIndex === articles.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  onClick={() => setCurrentIndex(Math.min(deckArticles.length - 1, currentIndex + 1))}
+                  disabled={currentIndex === deckArticles.length - 1}
+                  className={`btn-secondary ${currentIndex === deckArticles.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   Next
                 </button>
@@ -219,8 +246,21 @@ const DiscoveryPage = () => {
               </div>
             </>
           ) : (
-            <div className="flex items-center justify-center h-96">
-              <p className="text-gray-400">No articles available</p>
+              <div className="card">
+              <h3 className="text-xl font-bold mb-2 font-sans">Session Summary</h3>
+              <p className="text-gray-400 mb-4 font-serif">סיימת לעבור על כל המאמרים בסשן הזה.</p>
+              {sessionSaved.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-gray-300">מאמרים שנשמרו:</p>
+                  <ul className="list-disc list-inside text-gray-400">
+                    {sessionSaved.map(a => (
+                      <li key={a.id}>{a.title}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <p className="text-gray-400">לא נשמרו מאמרים בסשן הזה.</p>
+              )}
             </div>
           )}
         </div>
@@ -240,7 +280,7 @@ const DiscoveryPage = () => {
           {/* AI Assistant */}
           <div className="card">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold">AI Assistant</h3>
+              <h3 className="text-xl font-bold font-sans">AI Assistant</h3>
               <button
                 onClick={() => setDevilsAdvocateMode(!devilsAdvocateMode)}
                 className={`text-xs px-3 py-1 rounded-full transition-colors ${
@@ -279,8 +319,8 @@ const DiscoveryPage = () => {
               {aiResponses.length > 0 ? (
                 aiResponses.map((response, idx) => (
                   <div key={idx} className="border-t border-gray-light pt-4">
-                    <p className="text-sm text-primary font-medium mb-1">Q: {response.question}</p>
-                    <p className="text-sm text-gray-300">A: {response.answer}</p>
+                    <p className="text-sm text-gradient font-semibold mb-1 font-sans">Q: {response.question}</p>
+                    <p className="text-sm text-gray-300 font-serif">A: {response.answer}</p>
                   </div>
                 ))
               ) : (
@@ -293,6 +333,7 @@ const DiscoveryPage = () => {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 };
 

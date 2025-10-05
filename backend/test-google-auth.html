@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Connection Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.disconnected {
+            background: #fee;
+            color: #c33;
+            border: 2px solid #c33;
+        }
+        .status.connected {
+            background: #efe;
+            color: #3c3;
+            border: 2px solid #3c3;
+        }
+        .status.loading {
+            background: #ffeaa7;
+            color: #fdcb6e;
+            border: 2px solid #fdcb6e;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+        button.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        button.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        button.secondary {
+            background: #e74c3c;
+            color: white;
+        }
+        button.secondary:hover {
+            background: #c0392b;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        .code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 בדיקת חיבור Google Drive</h1>
+        
+        <div id="status" class="status loading">
+            בודק סטטוס חיבור...
+        </div>
+
+        <button id="connectBtn" class="primary" onclick="connectGoogleDrive()" disabled>
+            🔐 התחבר ל-Google Drive
+        </button>
+
+        <button id="disconnectBtn" class="secondary" onclick="disconnectGoogleDrive()" style="display: none;">
+            ❌ התנתק מ-Google Drive
+        </button>
+
+        <button onclick="checkStatus()" style="background: #3498db; color: white;">
+            🔄 רענן סטטוס
+        </button>
+
+        <div class="info">
+            <strong>הוראות:</strong>
+            <ol style="text-align: right; margin: 10px 0;">
+                <li>לחץ על "התחבר ל-Google Drive"</li>
+                <li>תפתח חלון חדש - התחבר עם חשבון Google שלך</li>
+                <li>אשר גישה לקבצים ב-Drive</li>
+                <li>לאחר האישור, החלון ייסגר והסטטוס יתעדכן</li>
+            </ol>
+            <p style="margin-top: 15px;">
+                <strong>API Endpoint:</strong> <span class="code">http://localhost:5000/api/google-drive</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api/google-drive';
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('status');
+                const connectBtn = document.getElementById('connectBtn');
+                const disconnectBtn = document.getElementById('disconnectBtn');
+
+                if (data.connected) {
+                    statusDiv.className = 'status connected';
+                    statusDiv.textContent = '✅ מחובר ל-Google Drive!';
+                    connectBtn.style.display = 'none';
+                    disconnectBtn.style.display = 'block';
+                } else {
+                    statusDiv.className = 'status disconnected';
+                    statusDiv.textContent = '❌ לא מחובר ל-Google Drive';
+                    connectBtn.style.display = 'block';
+                    connectBtn.disabled = false;
+                    disconnectBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error checking status:', error);
+                const statusDiv = document.getElementById('status');
+                statusDiv.className = 'status disconnected';
+                statusDiv.textContent = '⚠️ שגיאה בבדיקת סטטוס - ודא שהשרבר רץ';
+            }
+        }
+
+        async function connectGoogleDrive() {
+            try {
+                // Get auth URL
+                const response = await fetch(`${API_BASE}/auth/url`);
+                const data = await response.json();
+
+                // Open Google OAuth in popup
+                const width = 600;
+                const height = 700;
+                const left = window.screen.width / 2 - width / 2;
+                const top = window.screen.height / 2 - height / 2;
+
+                const popup = window.open(
+                    data.authUrl,
+                    'Google Drive Authorization',
+                    `width=${width},height=${height},left=${left},top=${top}`
+                );
+
+                if (!popup) {
+                    alert('אנא אפשר חלונות קופצים (popups) עבור האתר הזה');
+                    return;
+                }
+
+                // Check popup status
+                const statusDiv = document.getElementById('status');
+                statusDiv.className = 'status loading';
+                statusDiv.textContent = '⏳ ממתין לאישור...';
+
+                const checkPopup = setInterval(() => {
+                    if (popup.closed) {
+                        clearInterval(checkPopup);
+                        setTimeout(checkStatus, 1000);
+                    }
+                }, 500);
+
+            } catch (error) {
+                console.error('Error connecting:', error);
+                alert('שגיאה בהתחברות: ' + error.message);
+            }
+        }
+
+        async function disconnectGoogleDrive() {
+            if (!confirm('האם אתה בטוח שברצונך להתנתק?')) {
+                return;
+            }
+
+            try {
+                await fetch(`${API_BASE}/disconnect`, { method: 'POST' });
+                checkStatus();
+            } catch (error) {
+                console.error('Error disconnecting:', error);
+                alert('שגיאה בהתנתקות: ' + error.message);
+            }
+        }
+
+        // Check status on load
+        checkStatus();
+    </script>
+</body>
+</html>

@@ -27,11 +27,12 @@ A full-stack personal knowledge management and discovery application for a singl
 - Environment-based configuration
 
 ### Frontend
-- **React** with TypeScript
+- **React 19** with TypeScript
 - **Vite** for fast development and building
-- **Tailwind CSS** for styling (Dark mode only)
+- **Tailwind CSS** with custom gradient accents
+- **Framer Motion** for smooth animations
 - **React Router** for navigation
-- **Google Sans** font for typography
+- **Inter** (UI) + **IBM Plex Serif** (content) typography
 - **Axios** for API calls
 
 ## Getting Started
@@ -195,9 +196,12 @@ nitzutz-spark/
 ## Design Principles
 
 - **Dark Mode Only**: Pure black background (#000000) with white text (#FFFFFF)
-- **Professional Blue Accent**: #3B82F6 for interactive elements
-- **Google Sans Typography**: Clean, modern font throughout
-- **Minimalist Design**: Clean, professional interface without emojis
+- **Gradient Accent**: Blue to purple gradient (#3B82F6 → #818CF8) for interactive elements
+- **Dual Font Strategy**:
+  - **Inter**: UI elements, headings, buttons
+  - **IBM Plex Serif**: Content, articles, long-form text
+- **Smooth Animations**: Framer Motion for micro-interactions and transitions
+- **Minimalist Design**: Clean, professional interface
 - **Single User Focus**: Designed for personal use without multi-user complexity
 
 ## Contributing

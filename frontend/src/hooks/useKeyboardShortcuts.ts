@@ -18,7 +18,6 @@ export const useKeyboardShortcuts = ({
       // Ignore if user is typing in an input/textarea
       if (
         e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextElement ||
         e.target instanceof HTMLTextAreaElement
       ) {
         return;
