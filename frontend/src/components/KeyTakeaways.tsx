@@ -10,6 +10,7 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
   const [keyPoints, setKeyPoints] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     const fetchKeyPoints = async () => {
@@ -99,6 +100,9 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
     return null;
   }
 
+  const displayedPoints = showAll ? keyPoints : keyPoints.slice(0, 3);
+  const hasMore = keyPoints.length > 3;
+
   return (
     <motion.div 
       className="bg-gray-dark rounded-lg p-6 border border-gray-light"
@@ -114,7 +118,7 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
         🔑 נקודות מפתח
       </motion.h3>
       <ul className="space-y-3">
-        {keyPoints.map((point, index) => (
+        {displayedPoints.map((point, index) => (
           <motion.li 
             key={index} 
             className="flex items-start"
@@ -132,6 +136,28 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
           </motion.li>
         ))}
       </ul>
+      
+      {/* Read More Button */}
+      {hasMore && (
+        <motion.button
+          onClick={() => setShowAll(!showAll)}
+          className="mt-4 w-full text-sm text-primary hover:text-white transition-colors flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-medium font-sans"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          {showAll ? (
+            <>
+              <span>הצג פחות</span>
+              <span>↑</span>
+            </>
+          ) : (
+            <>
+              <span>קרא עוד ({keyPoints.length - 3} נוספים)</span>
+              <span>↓</span>
+            </>
+          )}
+        </motion.button>
+      )}
     </motion.div>
   );
 };
