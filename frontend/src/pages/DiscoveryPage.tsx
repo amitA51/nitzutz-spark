@@ -271,7 +271,7 @@ const DiscoveryPage = () => {
           ) : currentArticle ? (
             <>
               {/* Deck stack */}
-              <div className="relative h-[28rem]">
+              <div className="relative h-[22rem]">
                 {deckArticles.slice(currentIndex, currentIndex + 3).map((a, idx) => (
                   <motion.div
                     key={a.id}
@@ -307,33 +307,33 @@ const DiscoveryPage = () => {
               </div>
               
               {/* Navigation Controls */}
-              <div className="mt-6 flex items-center justify-between">
+              <div className="mt-3 flex items-center justify-between">
                 <button
                   onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                   disabled={currentIndex === 0}
-                  className={`btn-secondary ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`btn-secondary text-sm py-1.5 px-3 ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   קודם
                 </button>
                 
-                <span className="text-gray-400">
+                <span className="text-gray-400 text-sm">
                   {currentIndex + 1} / {deckArticles.length}
                 </span>
                 
                 <button
                   onClick={() => setCurrentIndex(Math.min(deckArticles.length - 1, currentIndex + 1))}
                   disabled={currentIndex === deckArticles.length - 1}
-                  className={`btn-secondary ${currentIndex === deckArticles.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`btn-secondary text-sm py-1.5 px-3 ${currentIndex === deckArticles.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   הבא
                 </button>
               </div>
               
               {/* Save Button with Animation */}
-              <div className="mt-4 flex justify-center relative">
+              <div className="mt-3 flex justify-center relative">
                 <motion.button
                   onClick={handleSaveArticle}
-                  className={`${currentArticle.isSaved ? 'btn-secondary' : 'btn-primary'} flex items-center space-x-2`}
+                  className={`${currentArticle.isSaved ? 'btn-secondary' : 'btn-primary'} flex items-center space-x-2 text-sm py-2 px-4`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   animate={saveAnimation ? { 
@@ -344,7 +344,7 @@ const DiscoveryPage = () => {
                 >
                   <motion.svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    className="h-5 w-5" 
+                    className="h-4 w-4" 
                     fill={currentArticle.isSaved ? 'currentColor' : 'none'} 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
@@ -353,7 +353,7 @@ const DiscoveryPage = () => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                   </motion.svg>
-                  <span>{currentArticle.isSaved ? 'נשמר' : 'שמור מאמר'}</span>
+                  <span>{currentArticle.isSaved ? 'נשמר' : 'שמור'}</span>
                 </motion.button>
                 
                 {/* Success Checkmark Animation */}
@@ -390,7 +390,7 @@ const DiscoveryPage = () => {
         </div>
 
         {/* AI Assistant Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-3">
           {/* Key Takeaways */}
           {currentArticle && (
             <KeyTakeaways articleId={currentArticle.id} />
@@ -402,54 +402,54 @@ const DiscoveryPage = () => {
           )}
 
           {/* AI Assistant */}
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold font-sans">עוזר AI</h3>
+          <div className="card p-3">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold font-sans text-gradient">עוזר AI</h3>
               <button
                 onClick={() => setDevilsAdvocateMode(!devilsAdvocateMode)}
-                className={`text-xs px-3 py-1 rounded-full transition-colors ${
+                className={`text-[10px] px-2 py-0.5 rounded-full transition-colors ${
                   devilsAdvocateMode 
                     ? 'bg-red-600 text-white' 
                     : 'bg-gray-medium text-gray-400 hover:bg-gray-light'
                 }`}
                 title="מצב סניגור השטן - AI יאתגר את הטענות של המאמר"
               >
-                {devilsAdvocateMode ? '😈 סניגור' : '🤔 רגיל'}
+                {devilsAdvocateMode ? '😈' : '🤔'}
               </button>
             </div>
             
             {/* Question Input */}
-            <div className="mb-4">
+            <div className="mb-3">
               <textarea
                 value={aiQuestion}
                 onChange={(e) => setAiQuestion(e.target.value)}
                 placeholder={devilsAdvocateMode 
-                  ? "ה-AI יאתגר את הטענות ויציג ניגודים..." 
-                  : "שאל שאלה על המאמר..."}
-                className="input w-full h-24 resize-none"
+                  ? "ה-AI יאתגר..." 
+                  : "שאל שאלה..."}
+                className="input w-full h-16 resize-none text-xs"
                 disabled={!currentArticle}
               />
               <button
                 onClick={handleAskAI}
                 disabled={!aiQuestion.trim() || !currentArticle}
-                className="btn-primary mt-2 w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary mt-2 w-full disabled:opacity-50 disabled:cursor-not-allowed text-xs py-1.5"
               >
-                {devilsAdvocateMode ? 'אתגר את זה' : 'שאל את ה-AI'}
+                {devilsAdvocateMode ? 'אתגר' : 'שאל'}
               </button>
             </div>
             
             {/* AI Responses */}
-            <div className="space-y-4 max-h-96 overflow-y-auto">
+            <div className="space-y-2 max-h-48 overflow-y-auto">
               {aiResponses.length > 0 ? (
                 aiResponses.map((response, idx) => (
-                  <div key={idx} className="border-t border-gray-light pt-4">
-                    <p className="text-sm text-gradient font-semibold mb-1 font-sans">ש: {response.question}</p>
-                    <p className="text-sm text-gray-300 font-serif">ת: {response.answer}</p>
+                  <div key={idx} className="border-t border-gray-light pt-2">
+                    <p className="text-xs text-gradient font-semibold mb-0.5 font-sans">ש: {response.question}</p>
+                    <p className="text-xs text-gray-300 font-serif leading-snug">ת: {response.answer}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-gray-400">
-                  שאל שאלות על המאמר לקבלת תובנות מה-AI.
+                <p className="text-xs text-gray-400">
+                  שאל שאלות...
                 </p>
               )}
             </div>

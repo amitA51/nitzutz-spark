@@ -67,14 +67,14 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
   if (loading) {
     return (
       <motion.div 
-        className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+        className="bg-gray-dark rounded-lg p-3 border border-gray-light"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        <h3 className="text-lg font-semibold mb-4 text-gradient font-sans">🔑 נקודות מפתח</h3>
-        <div className="flex items-center justify-center py-8">
+        <h3 className="text-sm font-semibold mb-2 text-gradient font-sans">🔑 נקודות מפתח</h3>
+        <div className="flex items-center justify-center py-4">
           <motion.div 
-            className="rounded-full h-8 w-8 border-2 border-primary border-t-transparent"
+            className="rounded-full h-6 w-6 border-2 border-primary border-t-transparent"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
@@ -86,12 +86,12 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
   if (error) {
     return (
       <motion.div 
-        className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+        className="bg-gray-dark rounded-lg p-3 border border-gray-light"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <h3 className="text-lg font-semibold mb-4 text-gradient font-sans">🔑 נקודות מפתח</h3>
-        <p className="text-sm text-red-400 font-serif">❌ {error}</p>
+        <h3 className="text-sm font-semibold mb-2 text-gradient font-sans">🔑 נקודות מפתח</h3>
+        <p className="text-xs text-red-400 font-serif">❌ {error}</p>
       </motion.div>
     );
   }
@@ -105,32 +105,32 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
 
   return (
     <motion.div 
-      className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+      className="bg-gray-dark rounded-lg p-3 border border-gray-light"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
     >
       <motion.h3 
-        className="text-lg font-semibold mb-4 text-gradient font-sans"
+        className="text-sm font-semibold mb-2 text-gradient font-sans"
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >
         🔑 נקודות מפתח
       </motion.h3>
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {displayedPoints.map((point, index) => (
           <motion.li 
             key={index} 
             className="flex items-start"
-            initial={{ opacity: 0, x: -20 }}
+            initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ x: 5 }}
+            transition={{ delay: index * 0.05 }}
+            whileHover={{ x: 3 }}
           >
-            <span className="bg-gradient-accent text-white font-bold rounded-full w-6 h-6 flex items-center justify-center ml-3 mt-0.5 flex-shrink-0 text-xs">
+            <span className="bg-gradient-accent text-white font-bold rounded-full w-5 h-5 flex items-center justify-center ml-2 mt-0.5 flex-shrink-0 text-[10px]">
               {index + 1}
             </span>
-            <span className="text-sm text-gray-300 leading-relaxed font-serif">
+            <span className="text-xs text-gray-300 leading-snug font-serif">
               {point.replace(/^[-•*]\s*/, '').replace(/^"\s*|\s*"$/g, '')}
             </span>
           </motion.li>
@@ -141,18 +141,18 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
       {hasMore && (
         <motion.button
           onClick={() => setShowAll(!showAll)}
-          className="mt-4 w-full text-sm text-primary hover:text-white transition-colors flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-medium font-sans"
+          className="mt-2 w-full text-xs text-primary hover:text-white transition-colors flex items-center justify-center gap-1 py-1.5 rounded-lg hover:bg-gray-medium font-sans"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
           {showAll ? (
             <>
-              <span>הצג פחות</span>
+              <span>פחות</span>
               <span>↑</span>
             </>
           ) : (
             <>
-              <span>קרא עוד ({keyPoints.length - 3} נוספים)</span>
+              <span>+{keyPoints.length - 3}</span>
               <span>↓</span>
             </>
           )}

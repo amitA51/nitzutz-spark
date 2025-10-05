@@ -45,14 +45,14 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
   if (loading) {
     return (
       <motion.div 
-        className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+        className="bg-gray-dark rounded-lg p-3 border border-gray-light"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        <h3 className="text-lg font-semibold mb-4 text-gradient font-sans">🕸️ קשרים</h3>
-        <div className="flex items-center justify-center py-8">
+        <h3 className="text-sm font-semibold mb-2 text-gradient font-sans">🕸️ קשרים</h3>
+        <div className="flex items-center justify-center py-4">
           <motion.div 
-            className="rounded-full h-8 w-8 border-2 border-primary border-t-transparent"
+            className="rounded-full h-6 w-6 border-2 border-primary border-t-transparent"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
@@ -64,12 +64,12 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
   if (error) {
     return (
       <motion.div 
-        className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+        className="bg-gray-dark rounded-lg p-3 border border-gray-light"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <h3 className="text-lg font-semibold mb-4 text-gradient font-sans">🕸️ קשרים</h3>
-        <p className="text-sm text-red-400 font-serif">❌ {error}</p>
+        <h3 className="text-sm font-semibold mb-2 text-gradient font-sans">🕸️ קשרים</h3>
+        <p className="text-xs text-red-400 font-serif">❌ {error}</p>
       </motion.div>
     );
   }
@@ -96,33 +96,33 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
 
   return (
     <motion.div 
-      className="bg-gray-dark rounded-lg p-6 border border-gray-light"
+      className="bg-gray-dark rounded-lg p-3 border border-gray-light"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
     >
       <motion.h3 
-        className="text-lg font-semibold mb-4 text-gradient font-sans"
+        className="text-sm font-semibold mb-2 text-gradient font-sans"
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
       >
         🕸️ קשרים
       </motion.h3>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {displayedConnections.map((connection, index) => (
           <motion.div
             key={index}
-            className="border-r-2 border-primary pr-4 py-2 hover:bg-gray-medium transition-colors rounded-l"
-            initial={{ opacity: 0, x: 20 }}
+            className="border-r-2 border-primary pr-2 py-1.5 hover:bg-gray-medium transition-colors rounded-l"
+            initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ x: -5 }}
+            transition={{ delay: index * 0.05 }}
+            whileHover={{ x: -3 }}
           >
-            <div className="flex items-start gap-2">
-              <span className="text-lg flex-shrink-0">{getIcon(connection.type)}</span>
+            <div className="flex items-start gap-1.5">
+              <span className="text-base flex-shrink-0">{getIcon(connection.type)}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-400 mb-1 font-sans">{connection.relation}</p>
-                <p className="text-sm font-medium text-white font-serif">{connection.title}</p>
+                <p className="text-[10px] text-gray-400 mb-0.5 font-sans">{connection.relation}</p>
+                <p className="text-xs font-medium text-white font-serif leading-tight">{connection.title}</p>
               </div>
             </div>
           </motion.div>
@@ -133,18 +133,18 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
       {hasMore && (
         <motion.button
           onClick={() => setShowAll(!showAll)}
-          className="mt-4 w-full text-sm text-primary hover:text-white transition-colors flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-medium font-sans"
+          className="mt-2 w-full text-xs text-primary hover:text-white transition-colors flex items-center justify-center gap-1 py-1.5 rounded-lg hover:bg-gray-medium font-sans"
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
           {showAll ? (
             <>
-              <span>הצג פחות</span>
+              <span>פחות</span>
               <span>↑</span>
             </>
           ) : (
             <>
-              <span>קרא עוד ({connections.length - 3} נוספים)</span>
+              <span>+{connections.length - 3}</span>
               <span>↓</span>
             </>
           )}
