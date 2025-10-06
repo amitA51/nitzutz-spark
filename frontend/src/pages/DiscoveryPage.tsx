@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, useMotionValue, useTransform, type PanInfo } from 'framer-motion';
+import { motion, useMotionValue, useTransform, AnimatePresence, type PanInfo } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import ArticleCard from '../components/ArticleCard';
 import KeyTakeaways from '../components/KeyTakeaways';
@@ -9,6 +9,9 @@ import SpacedRepetitionPrompt from '../components/SpacedRepetitionPrompt';
 import { articlesAPI, type Article } from '../api/articles';
 import { savedArticlesAPI } from '../api/savedArticles';
 import apiClient from '../api/client';
+import Loader from '../components/Loader';
+import EmptyState from '../components/EmptyState';
+import { useToast } from '../components/Toast';
 
 // Using Article type from API layer
 
@@ -25,6 +28,9 @@ const DiscoveryPage = () => {
   const [saveAnimation, setSaveAnimation] = useState(false);
   const [skipAnimation, setSkipAnimation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [openSection, setOpenSection] = useState<'takeaways' | 'connections' | null>('takeaways');
+  const [readingLength, setReadingLength] = useState<'all'|'short'|'medium'|'long'>('all');
+  const { toasts, addToast, removeToast, ToastContainer: ToastView } = useToast();
 
   // Queries
   const categoriesQuery = useQuery({
@@ -42,7 +48,7 @@ const DiscoveryPage = () => {
   const articles = articlesQuery.data?.articles || [];
 
   // Filter articles by search query
-  const filteredArticles = useMemo(() => {
+  const searchedArticles = useMemo(() => {
     if (!searchQuery.trim()) return articles;
     const query = searchQuery.toLowerCase();
     return articles.filter(a => 
@@ -52,12 +58,23 @@ const DiscoveryPage = () => {
     );
   }, [articles, searchQuery]);
 
+  const wordCount = (a: Article) => (a.content || a.excerpt || '').split(/\s+/).filter(Boolean).length;
+  const lengthFilteredArticles = useMemo(() => {
+    if (readingLength === 'all') return searchedArticles;
+    return searchedArticles.filter(a => {
+      const wc = wordCount(a);
+      if (readingLength === 'short') return wc < 500;
+      if (readingLength === 'medium') return wc >= 500 && wc <= 1500;
+      return wc > 1500; // long
+    });
+  }, [searchedArticles, readingLength]);
+
   // Reset deck on data change
   useEffect(() => {
-    setDeckArticles(filteredArticles);
+    setDeckArticles(lengthFilteredArticles);
     setCurrentIndex(0);
     setSessionSaved([]);
-  }, [filteredArticles]);
+  }, [lengthFilteredArticles]);
 
   const handleSaveArticle = useCallback(async () => {
     const article = deckArticles[currentIndex];
@@ -81,9 +98,11 @@ const DiscoveryPage = () => {
         setSessionSaved(prev => [updated[currentIndex], ...prev]);
         setRepetitionArticle({ id: article.id, title: article.title });
         setShowRepetitionPrompt(true);
+        addToast('המאמר נשמר', 'success');
       }
     } catch (error) {
       console.error('Error saving article:', error);
+      addToast('שגיאה בשמירת המאמר', 'error');
     }
   }, [deckArticles, currentIndex]);
 
@@ -162,7 +181,7 @@ const DiscoveryPage = () => {
           articleId={repetitionArticle.id}
           articleTitle={repetitionArticle.title}
           onClose={() => setShowRepetitionPrompt(false)}
-          onScheduled={() => console.log('Repetitions scheduled')}
+          onScheduled={() => addToast('חזרות תוזמנו', 'success')}
         />
       )}
 
@@ -225,6 +244,29 @@ const DiscoveryPage = () => {
               ))}
             </div>
           </div>
+
+          {/* Reading Length Filter */}
+          <div className="card p-4">
+            <h3 className="text-lg font-bold mb-3 text-gradient font-sans">⏱️ אורך קריאה</h3>
+            <div className="flex flex-wrap gap-2">
+              {([
+                {k:'all', label:'הכל'},
+                {k:'short', label:'קצר'},
+                {k:'medium', label:'בינוני'},
+                {k:'long', label:'ארוך'},
+              ] as const).map(opt => (
+                <button
+                  key={opt.k}
+                  onClick={() => setReadingLength(opt.k)}
+                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                    readingLength === opt.k ? 'bg-primary text-white border-primary' : 'bg-gray-dark border-gray-light text-gray-300 hover:bg-gray-medium'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </motion.div>
 
         {/* Main Content Area */}
@@ -266,12 +308,12 @@ const DiscoveryPage = () => {
           {/* Article Display: Deck */}
           {articlesQuery.isLoading ? (
             <div className="flex items-center justify-center h-96">
-              <p className="text-gray-400">Loading articles...</p>
+              <Loader text="טוען מאמרים..." />
             </div>
           ) : currentArticle ? (
             <>
               {/* Deck stack */}
-              <div className="relative h-[22rem]">
+              <div className="relative h-[28rem]">
                 {deckArticles.slice(currentIndex, currentIndex + 3).map((a, idx) => (
                   <motion.div
                     key={a.id}
@@ -307,33 +349,123 @@ const DiscoveryPage = () => {
               </div>
               
               {/* Navigation Controls */}
-              <div className="mt-3 flex items-center justify-between">
-                <button
-                  onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
-                  disabled={currentIndex === 0}
-                  className={`btn-secondary text-sm py-1.5 px-3 ${currentIndex === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  קודם
-                </button>
-                
-                <span className="text-gray-400 text-sm">
-                  {currentIndex + 1} / {deckArticles.length}
-                </span>
-                
-                <button
-                  onClick={() => setCurrentIndex(Math.min(deckArticles.length - 1, currentIndex + 1))}
-                  disabled={currentIndex === deckArticles.length - 1}
-                  className={`btn-secondary text-sm py-1.5 px-3 ${currentIndex === deckArticles.length - 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  הבא
-                </button>
+              <div className="mt-6 space-y-6 bg-gray-dark/50 p-6 rounded-2xl border border-gray-light">
+                {/* Progress Indicator with Article Count */}
+                <div className="space-y-3">
+                  {/* Article Counter - Prominent */}
+                  <div className="flex justify-center">
+                    <div className="bg-gradient-accent px-6 py-3 rounded-xl shadow-lg">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-white font-sans">
+                          {currentIndex + 1}
+                        </span>
+                        <span className="text-xl text-white/80 font-sans">
+                          /
+                        </span>
+                        <span className="text-2xl font-semibold text-white/90 font-sans">
+                          {deckArticles.length}
+                        </span>
+                      </div>
+                      <div className="text-xs text-white/70 text-center mt-1 font-sans">
+                        כרטיסיות זמינות
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Dots/Bar */}
+                  <div className="flex justify-center items-center gap-2 py-2">
+                    {deckArticles.length > 0 && (
+                      <>
+                        {deckArticles.length <= 15 ? (
+                          // Show dots for up to 15 items
+                          deckArticles.map((_, idx) => (
+                            <motion.div
+                              key={idx}
+                              className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                                idx === currentIndex 
+                                  ? 'bg-gradient-accent w-10 shadow-lg shadow-primary/50' 
+                                  : idx < currentIndex
+                                  ? 'bg-primary/50 w-2.5'
+                                  : 'bg-gray-light w-2.5'
+                              }`}
+                              onClick={() => setCurrentIndex(idx)}
+                              whileHover={{ scale: 1.3 }}
+                              whileTap={{ scale: 0.9 }}
+                              title={`כרטיסייה ${idx + 1}`}
+                            />
+                          ))
+                        ) : (
+                          // Show progress bar for many items
+                          <div className="w-full max-w-md">
+                            <div className="h-4 bg-gray-dark rounded-full overflow-hidden border-2 border-gray-light shadow-inner">
+                              <motion.div
+                                className="h-full bg-gradient-accent rounded-full shadow-lg"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${((currentIndex + 1) / deckArticles.length) * 100}%` }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            </div>
+                            <div className="text-xs text-gray-400 text-center mt-2 font-sans">
+                              {Math.round(((currentIndex + 1) / deckArticles.length) * 100)}% הושלם
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex items-center justify-center gap-8">
+                  {/* Previous Button (Left in RTL) */}
+                  <motion.button
+                    onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+                    disabled={currentIndex === 0}
+                    className={`flex flex-col items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all min-w-[140px] ${
+                      currentIndex === 0 
+                        ? 'bg-gray-dark/50 text-gray-600 cursor-not-allowed border border-gray-light/30' 
+                        : 'bg-gradient-accent hover:bg-gradient-accent-hover text-white shadow-xl hover:shadow-2xl hover:shadow-primary/40 border-2 border-primary/30'
+                    }`}
+                    whileHover={currentIndex > 0 ? { scale: 1.08, y: -3 } : {}}
+                    whileTap={currentIndex > 0 ? { scale: 0.95 } : {}}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                    <span className="text-lg font-sans">קודם</span>
+                    {currentIndex > 0 && (
+                      <span className="text-xs text-white/70">←</span>
+                    )}
+                  </motion.button>
+                  
+                  {/* Next Button (Right in RTL) */}
+                  <motion.button
+                    onClick={() => setCurrentIndex(Math.min(deckArticles.length - 1, currentIndex + 1))}
+                    disabled={currentIndex === deckArticles.length - 1}
+                    className={`flex flex-col items-center gap-2 px-8 py-4 rounded-2xl font-bold transition-all min-w-[140px] ${
+                      currentIndex === deckArticles.length - 1
+                        ? 'bg-gray-dark/50 text-gray-600 cursor-not-allowed border border-gray-light/30' 
+                        : 'bg-gradient-accent hover:bg-gradient-accent-hover text-white shadow-xl hover:shadow-2xl hover:shadow-primary/40 border-2 border-primary/30'
+                    }`}
+                    whileHover={currentIndex < deckArticles.length - 1 ? { scale: 1.08, y: -3 } : {}}
+                    whileTap={currentIndex < deckArticles.length - 1 ? { scale: 0.95 } : {}}
+                  >
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    </svg>
+                    <span className="text-lg font-sans">הבא</span>
+                    {currentIndex < deckArticles.length - 1 && (
+                      <span className="text-xs text-white/70">→</span>
+                    )}
+                  </motion.button>
+                </div>
               </div>
               
               {/* Save Button with Animation */}
-              <div className="mt-3 flex justify-center relative">
+              <div className="mt-4 flex justify-center relative">
                 <motion.button
                   onClick={handleSaveArticle}
-                  className={`${currentArticle.isSaved ? 'btn-secondary' : 'btn-primary'} flex items-center space-x-2 text-sm py-2 px-4`}
+                  className={`${currentArticle.isSaved ? 'btn-secondary' : 'btn-primary'} flex items-center space-x-2`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   animate={saveAnimation ? { 
@@ -344,7 +476,7 @@ const DiscoveryPage = () => {
                 >
                   <motion.svg 
                     xmlns="http://www.w3.org/2000/svg" 
-                    className="h-4 w-4" 
+                    className="h-5 w-5" 
                     fill={currentArticle.isSaved ? 'currentColor' : 'none'} 
                     viewBox="0 0 24 24" 
                     stroke="currentColor"
@@ -353,7 +485,7 @@ const DiscoveryPage = () => {
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                   </motion.svg>
-                  <span>{currentArticle.isSaved ? 'נשמר' : 'שמור'}</span>
+                  <span>{currentArticle.isSaved ? 'נשמר' : 'שמור מאמר'}</span>
                 </motion.button>
                 
                 {/* Success Checkmark Animation */}
@@ -373,6 +505,13 @@ const DiscoveryPage = () => {
               <div className="card">
               <h3 className="text-xl font-bold mb-2 font-sans">סיכום הסשן</h3>
               <p className="text-gray-400 mb-4 font-serif">סיימת לעבור על כל המאמרים בסשן הזה.</p>
+              {deckArticles.length === 0 && (
+                <EmptyState
+                  icon={<span>🔍</span>}
+                  title={searchQuery || selectedCategory !== 'all' || readingLength !== 'all' ? 'לא נמצאו מאמרים' : 'אין מאמרים כרגע'}
+                  description={searchQuery || selectedCategory !== 'all' || readingLength !== 'all' ? 'נסה לשנות חיפוש או מסננים' : 'חזור מאוחר יותר לתוכן חדש'}
+                />
+              )}
               {sessionSaved.length > 0 ? (
                 <div className="space-y-2">
                   <p className="text-gray-300">מאמרים שנשמרו:</p>
@@ -391,14 +530,79 @@ const DiscoveryPage = () => {
 
         {/* AI Assistant Sidebar */}
         <div className="lg:col-span-1 space-y-3">
-          {/* Key Takeaways */}
+          {/* Accordion: Key Takeaways & Connections */}
           {currentArticle && (
-            <KeyTakeaways articleId={currentArticle.id} />
-          )}
+            <div className="space-y-2">
+              {/* נקודות מפתח */}
+              <div className="bg-gray-dark rounded-lg border border-gray-light overflow-hidden">
+                <motion.button
+                  onClick={() => setOpenSection(openSection === 'takeaways' ? null : 'takeaways')}
+                  className="w-full p-3 flex items-center justify-between hover:bg-gray-medium transition-colors"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <h3 className="text-sm font-bold text-gradient font-sans">🔑 נקודות מפתח</h3>
+                  <motion.span
+                    animate={{ rotate: openSection === 'takeaways' ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-primary"
+                  >
+                    ▼
+                  </motion.span>
+                </motion.button>
+                
+                <AnimatePresence>
+                  {openSection === 'takeaways' && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-3 pb-3">
+                        <KeyTakeaways articleId={currentArticle.id} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-          {/* Connections - Knowledge Graph */}
-          {currentArticle && (
-            <ConnectionsSidebar articleId={currentArticle.id} />
+              {/* קשרים */}
+              <div className="bg-gray-dark rounded-lg border border-gray-light overflow-hidden">
+                <motion.button
+                  onClick={() => setOpenSection(openSection === 'connections' ? null : 'connections')}
+                  className="w-full p-3 flex items-center justify-between hover:bg-gray-medium transition-colors"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <h3 className="text-sm font-bold text-gradient font-sans">🕸️ קשרים</h3>
+                  <motion.span
+                    animate={{ rotate: openSection === 'connections' ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-primary"
+                  >
+                    ▼
+                  </motion.span>
+                </motion.button>
+                
+                <AnimatePresence>
+                  {openSection === 'connections' && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-3 pb-3">
+                        <ConnectionsSidebar articleId={currentArticle.id} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           )}
 
           {/* AI Assistant */}
@@ -456,6 +660,8 @@ const DiscoveryPage = () => {
           </div>
         </div>
       </div>
+      {/* Toasts */}
+      <ToastView toasts={toasts} removeToast={removeToast} />
     </div>
     </PageTransition>
   );

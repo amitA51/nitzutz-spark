@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import PageTransition from '../components/PageTransition';
 import GradientButton from '../components/GradientButton';
 import { insightsAPI } from '../api/insights';
+import Loader from '../components/Loader';
 
 const MentorPage = () => {
   const { data, isLoading, refetch } = useQuery({
@@ -17,6 +18,20 @@ const MentorPage = () => {
   const recommendations = insights.filter(i => i.type === 'recommendation');
   const question = insights.find(i => i.type === 'question');
 
+  const markViewed = async (id: string) => {
+    try {
+      await insightsAPI.markAsViewed(id);
+      refetch();
+    } catch {}
+  };
+
+  const dismissInsight = async (id: string) => {
+    try {
+      await insightsAPI.dismiss(id);
+      refetch();
+    } catch {}
+  };
+
   const handleGenerate = async () => {
     await insightsAPI.generateManually();
     setTimeout(() => refetch(), 3000);
@@ -26,11 +41,7 @@ const MentorPage = () => {
     return (
       <PageTransition>
         <div className="flex items-center justify-center h-96">
-          <motion.div
-            className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          />
+          <Loader text="טוען תובנות..." />
         </div>
       </PageTransition>
     );
@@ -57,6 +68,10 @@ const MentorPage = () => {
           >
             <h2 className="text-2xl font-bold text-gradient mb-4 font-sans">📊 {weeklyInsight.title}</h2>
             <p className="text-gray-300 font-serif text-lg leading-relaxed">{weeklyInsight.content}</p>
+            <div className="flex gap-2 justify-end mt-4">
+              <button onClick={() => markViewed(weeklyInsight.id)} className="text-xs px-3 py-1 rounded bg-gray-medium hover:bg-gray-light">סמן כנקרא</button>
+              <button onClick={() => dismissInsight(weeklyInsight.id)} className="text-xs px-3 py-1 rounded bg-gray-dark border border-gray-light hover:bg-gray-medium">הסתר</button>
+            </div>
           </motion.div>
         )}
 
@@ -73,6 +88,10 @@ const MentorPage = () => {
                 transition={{ delay: 0.2 + index * 0.05 }}
                 whileHover={{ scale: 1.02 }}
               >
+                <div className="flex gap-2 justify-end mb-2">
+                  <button onClick={() => markViewed(conn.id)} className="text-xs px-3 py-1 rounded bg-gray-medium hover:bg-gray-light">סמן כנקרא</button>
+                  <button onClick={() => dismissInsight(conn.id)} className="text-xs px-3 py-1 rounded bg-gray-dark border border-gray-light hover:bg-gray-medium">הסתר</button>
+                </div>
                 <h3 className="text-xl font-semibold text-white mb-3 font-sans">{conn.title}</h3>
                 <p className="text-gray-300 font-serif leading-relaxed">{conn.content}</p>
               </motion.div>
@@ -92,6 +111,10 @@ const MentorPage = () => {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + index * 0.05 }}
               >
+                <div className="flex gap-2 justify-end mb-2">
+                  <button onClick={() => markViewed(rec.id)} className="text-xs px-3 py-1 rounded bg-gray-medium hover:bg-gray-light">סמן כנקרא</button>
+                  <button onClick={() => dismissInsight(rec.id)} className="text-xs px-3 py-1 rounded bg-gray-dark border border-gray-light hover:bg-gray-medium">הסתר</button>
+                </div>
                 <h3 className="text-lg font-semibold text-primary mb-2 font-sans">{rec.title}</h3>
                 <p className="text-gray-300 font-serif">{rec.content}</p>
               </motion.div>
@@ -109,6 +132,10 @@ const MentorPage = () => {
           >
             <h2 className="text-2xl font-bold text-gradient mb-4 font-sans">🤔 {question.title}</h2>
             <p className="text-gray-200 font-serif text-lg leading-relaxed">{question.content}</p>
+            <div className="flex gap-2 justify-end mt-4">
+              <button onClick={() => markViewed(question.id)} className="text-xs px-3 py-1 rounded bg-gray-medium hover:bg-gray-light">סמן כנקרא</button>
+              <button onClick={() => dismissInsight(question.id)} className="text-xs px-3 py-1 rounded bg-gray-dark border border-gray-light hover:bg-gray-medium">הסתר</button>
+            </div>
           </motion.div>
         )}
 

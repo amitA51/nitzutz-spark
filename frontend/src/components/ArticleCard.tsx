@@ -21,7 +21,7 @@ interface ArticleCardProps {
 
 const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
   const [expanded, setExpanded] = useState(false);
-  const maxLen = 300; // Reduced from 600
+  const maxLen = 600;
   const shouldTruncate = (article.content || '').length > maxLen;
   const display = expanded || !shouldTruncate
     ? article.content
@@ -31,74 +31,82 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="mb-4"
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="mb-8"
     >
-      <SpotlightCard spotlightColor="rgba(59, 130, 246, 0.2)" className="bg-gray-dark border-gray-light p-4">
+      <SpotlightCard spotlightColor="rgba(59, 130, 246, 0.2)" className="bg-gray-dark border-gray-light p-8">
         {/* Article Header */}
-        <div className="mb-3">
-          <div className="flex items-start justify-between mb-2">
+        <div className="mb-6">
+          <div className="flex items-start justify-between mb-3">
             <motion.h2 
-              className="text-xl font-bold text-white font-sans leading-tight"
+              className="text-3xl font-bold text-white font-sans leading-tight"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
+              transition={{ delay: 0.1, duration: 0.4 }}
             >
               {article.title}
             </motion.h2>
             {article.readTime && (
               <motion.span 
-                className="text-xs text-gray-400 whitespace-nowrap ml-3 font-sans"
+                className="text-sm text-gray-400 whitespace-nowrap ml-4 font-sans"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.15 }}
+                transition={{ delay: 0.2 }}
               >
-                {article.readTime}׳
+                {article.readTime} דקות קריאה
               </motion.span>
             )}
           </div>
           
           <motion.div 
-            className="flex items-center space-x-3 text-xs text-gray-400 font-sans"
+            className="flex items-center space-x-4 text-sm text-gray-400 font-sans"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.12 }}
+            transition={{ delay: 0.15 }}
           >
             {article.author && (
               <span>מאת {article.author}</span>
             )}
-            <span className="px-2 py-0.5 bg-gradient-accent rounded text-white text-xs">
+            <span className="px-2 py-1 bg-gradient-accent rounded text-white font-medium">
               {article.category}
             </span>
           </motion.div>
         </div>
         
-        {/* Article Image (if available) - Hidden for compact view */}
-        {article.imageUrl && expanded && (
+        {/* Article Image (if available) */}
+        {article.imageUrl && (
           <motion.div 
-            className="mb-3 overflow-hidden rounded-lg"
+            className="mb-4 overflow-hidden rounded-lg"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
           >
             <img 
               src={article.imageUrl} 
               alt={article.title}
-              className="w-full h-40 object-cover hover:scale-105 transition-transform duration-500"
+              className="w-full h-64 object-cover hover:scale-105 transition-transform duration-500"
             />
           </motion.div>
         )}
         
-        {/* Article Excerpt - Only when expanded */}
-        {article.excerpt && expanded && (
+        {/* Divider */}
+        <motion.div 
+          className="border-t border-gradient-accent/30 my-6"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+        />
+        
+        {/* Article Excerpt */}
+        {article.excerpt && (
           <motion.div 
-            className="mb-3 p-3 bg-gradient-to-r from-blue-900/10 to-purple-900/10 rounded-lg border-r-2 border-primary"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            transition={{ duration: 0.3 }}
+            className="mb-6 p-4 bg-gradient-to-r from-blue-900/10 to-purple-900/10 rounded-lg border-r-4 border-primary"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
           >
-            <p className="text-gray-200 font-serif text-sm leading-relaxed italic">
-              {article.excerpt}
+            <p className="text-gray-200 font-serif text-lg leading-relaxed italic">
+              "עיקרי המאמר: {article.excerpt}"
             </p>
           </motion.div>
         )}
@@ -108,11 +116,11 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           className="prose prose-invert max-w-none"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.4 }}
         >
-          <p className="text-gray-300 whitespace-pre-wrap font-serif text-sm leading-relaxed">{display}</p>
+          <p className="text-gray-300 whitespace-pre-wrap font-serif text-base leading-relaxed tracking-wide">{display}</p>
           {shouldTruncate && (
-            <div className="mt-3">
+            <div className="mt-4">
               <GradientButton
                 onClick={() => setExpanded(!expanded)}
                 variant="primary"

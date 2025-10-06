@@ -15,6 +15,7 @@ import spacedRepetitionRouter from './routes/spacedRepetition';
 import googleDriveRouter from './routes/googleDrive';
 import aiContentGeneratorRouter from './routes/aiContentGenerator';
 import insightsRouter from './routes/insights';
+import healthRouter from './routes/health';
 import { startMentorCron } from './jobs/mentorJob';
 
 dotenv.config();
@@ -54,15 +55,16 @@ app.use('/api/spaced-repetition', spacedRepetitionRouter);
 app.use('/api/google-drive', googleDriveRouter);
 app.use('/api/ai-content', aiContentGeneratorRouter);
 app.use('/api/insights', insightsRouter);
+app.use('/api/health', healthRouter);
 
 // Serve static test page
 app.get('/test-google-auth', (req: Request, res: Response) => {
   res.sendFile(path.join(__dirname, '../test-google-auth.html'));
 });
 
-// Health check endpoint
+// Legacy health check endpoint (redirect to new)
 app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'OK', message: 'Nitzutz Spark Backend is running' });
+  res.redirect('/api/health');
 });
 
 // Error handling middleware

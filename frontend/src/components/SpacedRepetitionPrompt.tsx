@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import apiClient from '../api/client';
 import GradientButton from './GradientButton';
 
 interface SpacedRepetitionPromptProps {
@@ -44,7 +44,7 @@ const SpacedRepetitionPrompt: React.FC<SpacedRepetitionPromptProps> = ({
 
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/spaced-repetition/schedule`, {
+      await apiClient.post('/spaced-repetition/schedule', {
         articleId,
         intervals: selectedIntervals,
       });

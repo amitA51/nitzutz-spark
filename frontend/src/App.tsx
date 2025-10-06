@@ -94,7 +94,7 @@ function App() {
                 <motion.div
                   className="w-16 h-16 mx-auto mb-4 border-4 border-primary border-t-transparent rounded-full"
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  transition={{ duration: 1, repeat: Infinity }}
                 />
                 <p className="text-gray-400 font-sans">טוען...</p>
               </div>

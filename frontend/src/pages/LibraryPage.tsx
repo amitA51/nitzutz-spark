@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
 import BookItem from '../components/BookItem';
@@ -7,6 +7,9 @@ import ConceptCloud from '../components/ConceptCloud';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import SummaryAI from '../components/SummaryAI';
+import Loader from '../components/Loader';
+import EmptyState from '../components/EmptyState';
+import { useToast } from '../components/Toast';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -41,6 +44,9 @@ const LibraryPage = () => {
   const [selectedDriveFile, setSelectedDriveFile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSummaries, setExpandedSummaries] = useState<Record<string, boolean>>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tab, setTab] = useState<'all'|'reading'|'completed'>('all');
+  const { toasts, addToast, removeToast, ToastContainer: ToastView } = useToast();
   
   // Form states
   const [newBook, setNewBook] = useState({
@@ -99,6 +105,22 @@ const LibraryPage = () => {
     }
   };
 
+  const filteredBooks = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    const bySearch = term
+      ? books.filter(b =>
+          b.bookTitle.toLowerCase().includes(term) ||
+          (b.author || '').toLowerCase().includes(term)
+        )
+      : books;
+    if (tab === 'all') return bySearch;
+    if (tab === 'completed') {
+      return bySearch.filter(b => (b.totalPages || 0) > 0 && b.currentPage >= (b.totalPages || 0));
+    }
+    // reading
+    return bySearch.filter(b => (b.totalPages || 0) === 0 ? b.currentPage > 0 : b.currentPage < (b.totalPages || 0));
+  }, [books, searchTerm, tab]);
+
   const fetchSummaries = async (bookId: string) => {
     try {
       const response = await axios.get(`${API_BASE}/summaries/book/${bookId}`);
@@ -118,8 +140,10 @@ const LibraryPage = () => {
       setBooks([response.data, ...books]);
       setNewBook({ bookTitle: '', currentPage: 0, totalPages: '', author: '', isbn: '' });
       setShowAddBook(false);
+      addToast('הספר נוסף בהצלחה', 'success');
     } catch (error) {
       console.error('Error adding book:', error);
+      addToast('שגיאה בהוספת ספר', 'error');
     }
   };
 
@@ -130,8 +154,10 @@ const LibraryPage = () => {
       if (selectedBook?.id === bookId) {
         setSelectedBook(response.data);
       }
+      addToast('עודכן בהצלחה', 'success');
     } catch (error) {
       console.error('Error updating book:', error);
+      addToast('שגיאה בעדכון ספר', 'error');
     }
   };
 
@@ -145,8 +171,10 @@ const LibraryPage = () => {
         setSelectedBook(null);
         setSummaries([]);
       }
+      addToast('הספר נמחק', 'success');
     } catch (error) {
       console.error('Error deleting book:', error);
+      addToast('שגיאה במחיקת ספר', 'error');
     }
   };
 
@@ -162,8 +190,10 @@ const LibraryPage = () => {
       setSummaries([...summaries, response.data]);
       setNewSummary({ content: '', chapterNumber: '', chapterTitle: '', pageRange: '' });
       setShowAddSummary(false);
+      addToast('הסיכום נוסף', 'success');
     } catch (error) {
       console.error('Error adding summary:', error);
+      addToast('שגיאה בהוספת סיכום', 'error');
     }
   };
 
@@ -188,13 +218,12 @@ const LibraryPage = () => {
         bookAuthor: '',
         tags: []
       });
-      
-      alert('הייבוא הצליח!');
+      addToast('הייבוא הצליח', 'success');
       setShowDrivePicker(false);
       fetchBooks();
     } catch (error) {
       console.error('Error importing:', error);
-      alert('שגיאה בייבוא הסיכום');
+      addToast('שגיאה בייבוא הסיכום', 'error');
     }
   };
 
@@ -252,14 +281,14 @@ const LibraryPage = () => {
                 <motion.div
                   className="w-6 h-6 border-3 border-primary border-t-transparent rounded-full"
                   animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  transition={{ duration: 1, repeat: Infinity }}
                 />
                 <p className="text-gray-400 font-sans">טוען ספרים...</p>
               </div>
             </motion.div>
-          ) : books.length > 0 ? (
+          ) : filteredBooks.length > 0 ? (
             <div className="space-y-4">
-              {books.map((book) => (
+              {filteredBooks.map((book) => (
                 <BookItem
                   key={book.id}
                   book={book}
@@ -589,6 +618,18 @@ const LibraryPage = () => {
           </div>
         </div>
       )}
+      {/* Floating Add Button */}
+      <button
+        onClick={() => setShowAddBook(true)}
+        className="fixed bottom-6 left-6 bg-gradient-accent hover:bg-gradient-accent-hover text-white w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-3xl"
+        aria-label="הוסף ספר"
+        title="הוסף ספר"
+      >
+        +
+      </button>
+
+      {/* Toasts */}
+      <ToastView toasts={toasts} removeToast={removeToast} />
     </div>
     </PageTransition>
   );

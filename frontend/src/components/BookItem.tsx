@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { calculateReadingETA, formatETAMessage } from '../utils/dateUtils';
 
 interface Book {
   id: string;
@@ -44,6 +45,8 @@ const BookItem: React.FC<BookItemProps> = ({
     setNewPage(book.currentPage.toString());
     setIsEditing(false);
   };
+
+  const eta = book.totalPages ? calculateReadingETA(book.currentPage, book.totalPages) : null;
 
   return (
     <motion.div 
@@ -136,22 +139,29 @@ const BookItem: React.FC<BookItemProps> = ({
               className="bg-gradient-accent h-full"
               initial={{ width: 0 }}
               animate={{ width: `${progressPercentage}%` }}
-              transition={{ duration: 0.8, ease: 'easeOut' }}
+              transition={{ duration: 0.8 }}
             />
           </div>
         )}
         
         {book.totalPages && (
-          <p className="text-xs text-gray-400 mt-1 text-right font-sans">
-            {progressPercentage}% הושלם
-          </p>
+          <div className="mt-1 flex items-center justify-between">
+            <p className="text-xs text-gray-400 font-sans">
+              {progressPercentage}% הושלם
+            </p>
+            {/* ETA */}
+            {book.currentPage < (book.totalPages ?? 0) ? (
+              <p className="text-xs text-gray-400 font-sans">⏳ {formatETAMessage(eta)}</p>
+            ) : null}
+          </div>
         )}
+
       </div>
-      
+
       {/* ISBN (if available) */}
-      {book.isbn && (
+      {book.isbn ? (
         <p className="text-xs text-gray-500 mt-2">ISBN: {book.isbn}</p>
-      )}
+      ) : null}
     </motion.div>
   );
 };

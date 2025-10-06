@@ -54,7 +54,7 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
           <motion.div 
             className="rounded-full h-6 w-6 border-2 border-primary border-t-transparent"
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            transition={{ duration: 1, repeat: Infinity }}
           />
         </div>
       </motion.div>
@@ -95,19 +95,7 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
   const hasMore = connections.length > 3;
 
   return (
-    <motion.div 
-      className="bg-gray-dark rounded-lg p-3 border border-gray-light"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
-    >
-      <motion.h3 
-        className="text-sm font-semibold mb-2 text-gradient font-sans"
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-      >
-        🕸️ קשרים
-      </motion.h3>
+    <div>
       <div className="space-y-2">
         {displayedConnections.map((connection, index) => (
           <motion.div
@@ -150,7 +138,7 @@ const ConnectionsSidebar: React.FC<ConnectionsSidebarProps> = ({ articleId }) =>
           )}
         </motion.button>
       )}
-    </motion.div>
+    </div>
   );
 };
 

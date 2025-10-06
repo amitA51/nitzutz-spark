@@ -76,7 +76,7 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
           <motion.div 
             className="rounded-full h-6 w-6 border-2 border-primary border-t-transparent"
             animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            transition={{ duration: 1, repeat: Infinity }}
           />
         </div>
       </motion.div>
@@ -104,19 +104,7 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
   const hasMore = keyPoints.length > 3;
 
   return (
-    <motion.div 
-      className="bg-gray-dark rounded-lg p-3 border border-gray-light"
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ borderColor: 'rgba(59, 130, 246, 0.5)' }}
-    >
-      <motion.h3 
-        className="text-sm font-semibold mb-2 text-gradient font-sans"
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-      >
-        🔑 נקודות מפתח
-      </motion.h3>
+    <div>
       <ul className="space-y-2">
         {displayedPoints.map((point, index) => (
           <motion.li 
@@ -158,7 +146,7 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
           )}
         </motion.button>
       )}
-    </motion.div>
+    </div>
   );
 };
 

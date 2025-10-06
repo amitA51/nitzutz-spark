@@ -129,11 +129,11 @@ router.post('/extract-key-points', requireAI, async (req: Request, res: Response
     const messages = [
       { 
         role: 'system', 
-        content: 'You are a helpful assistant that extracts key takeaways from articles. Provide 3-5 concise bullet points that capture the most important insights. Each point should be one sentence, clear and actionable. Return the response as a JSON array of strings.' 
+        content: 'אתה עוזר שמסיק נקודות מפתח ממאמרים. ספק 3-5 נקודות תמציתיות ומדויקות בעברית שמסכמות את התובנות החשובות ביותר. כל נקודה צריכה להיות משפט אחד ברור ומעשי. החזר JSON array של מחרוזות בעברית בלבד.' 
       },
       { 
         role: 'user', 
-        content: `Extract the key takeaways from this article:\n\nTitle: ${article.title}\n\nContent:\n${article.content}\n\nRespond with a JSON array of 3-5 key takeaway strings.` 
+        content: `חלץ את הנקודות המרכזיות מהמאמר הזה:\n\nכותרת: ${article.title}\n\nתוכן:\n${article.content}\n\nהחזר JSON array של 3-5 נקודות מפתח בעברית.` 
       },
     ] as const;
 
@@ -306,6 +306,25 @@ router.post('/summary/shorten', requireAI, async (req: Request, res: Response) =
   } catch (error: any) {
     console.error('Error in /summary/shorten:', error);
     res.status(500).json({ error: 'Failed to shorten summary', details: error.message });
+  }
+});
+
+// Get AI status (does not require AI to be enabled)
+router.get('/status', async (_req: Request, res: Response) => {
+  try {
+    const enabled = await isAIEnabledAsync();
+    const model = getDefaultModel();
+    const provider = process.env.AI_BASE_URL || 'https://router.huggingface.co/v1';
+    
+    res.json({
+      enabled,
+      model,
+      provider,
+      configured: enabled,
+    });
+  } catch (error: any) {
+    console.error('Error checking AI status:', error);
+    res.status(500).json({ error: 'Failed to check AI status', details: error.message });
   }
 });
 
