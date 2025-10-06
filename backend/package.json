@@ -32,7 +32,8 @@
     "googleapis": "^161.0.0",
     "nitzutz-spark": "file:..",
     "node-cron": "^3.0.3",
-    "openai": "^4.104.0"
+    "openai": "^4.104.0",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
