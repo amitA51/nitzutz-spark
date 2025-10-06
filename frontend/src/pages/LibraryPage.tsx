@@ -42,8 +42,6 @@ const LibraryPage = () => {
   const [selectedDriveFile, setSelectedDriveFile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSummaries, setExpandedSummaries] = useState<Record<string, boolean>>({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const [tab, setTab] = useState<'all'|'reading'|'completed'>('all');
   const { toasts, addToast, removeToast, ToastContainer: ToastView } = useToast();
   
   // Form states
@@ -103,21 +101,7 @@ const LibraryPage = () => {
     }
   };
 
-  const filteredBooks = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    const bySearch = term
-      ? books.filter(b =>
-          b.bookTitle.toLowerCase().includes(term) ||
-          (b.author || '').toLowerCase().includes(term)
-        )
-      : books;
-    if (tab === 'all') return bySearch;
-    if (tab === 'completed') {
-      return bySearch.filter(b => (b.totalPages || 0) > 0 && b.currentPage >= (b.totalPages || 0));
-    }
-    // reading
-    return bySearch.filter(b => (b.totalPages || 0) === 0 ? b.currentPage > 0 : b.currentPage < (b.totalPages || 0));
-  }, [books, searchTerm, tab]);
+  const filteredBooks = books;
 
   const fetchSummaries = async (bookId: string) => {
     try {
