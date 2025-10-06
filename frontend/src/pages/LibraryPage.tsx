@@ -7,8 +7,6 @@ import ConceptCloud from '../components/ConceptCloud';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import SummaryAI from '../components/SummaryAI';
-import Loader from '../components/Loader';
-import EmptyState from '../components/EmptyState';
 import { useToast } from '../components/Toast';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -44,8 +42,6 @@ const LibraryPage = () => {
   const [selectedDriveFile, setSelectedDriveFile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSummaries, setExpandedSummaries] = useState<Record<string, boolean>>({});
-  const [searchTerm, setSearchTerm] = useState('');
-  const [tab, setTab] = useState<'all'|'reading'|'completed'>('all');
   const { toasts, addToast, removeToast, ToastContainer: ToastView } = useToast();
   
   // Form states

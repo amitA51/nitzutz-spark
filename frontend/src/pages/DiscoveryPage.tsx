@@ -26,7 +26,6 @@ const DiscoveryPage = () => {
   const [repetitionArticle, setRepetitionArticle] = useState<{ id: string; title: string } | null>(null);
   const [sessionSaved, setSessionSaved] = useState<Article[]>([]);
   const [saveAnimation, setSaveAnimation] = useState(false);
-  const [skipAnimation, setSkipAnimation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [openSection, setOpenSection] = useState<'takeaways' | 'connections' | null>('takeaways');
   const [readingLength, setReadingLength] = useState<'all'|'short'|'medium'|'long'>('all');
@@ -160,9 +159,7 @@ const DiscoveryPage = () => {
       setCurrentIndex(i => Math.min(deckArticles.length, i + 1));
       x.set(0);
     } else if (info.offset.x < -threshold) {
-      // Trigger skip animation
-      setSkipAnimation(true);
-      setTimeout(() => setSkipAnimation(false), 600);
+      // Skip to next article
       setCurrentIndex(i => Math.min(deckArticles.length, i + 1));
       x.set(0);
     } else {
@@ -215,7 +212,7 @@ const DiscoveryPage = () => {
             </div>
             {searchQuery && (
               <p className="text-xs text-gray-400 mt-2">
-                נמצאו {filteredArticles.length} תוצאות
+                נמצאו {lengthFilteredArticles.length} תוצאות
               </p>
             )}
           </div>
