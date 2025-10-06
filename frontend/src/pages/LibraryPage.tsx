@@ -42,6 +42,8 @@ const LibraryPage = () => {
   const [selectedDriveFile, setSelectedDriveFile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSummaries, setExpandedSummaries] = useState<Record<string, boolean>>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const [tab, setTab] = useState<'all'|'reading'|'completed'>('all');
   const { toasts, addToast, removeToast, ToastContainer: ToastView } = useToast();
   
   // Form states
