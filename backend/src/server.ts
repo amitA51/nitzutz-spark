@@ -1,7 +1,10 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import { prisma } from './db';
 
 // Import routes
@@ -23,26 +26,78 @@ dotenv.config();
 const app: Express = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-const allowedOrigins = [
+// Basic security headers
+app.use(helmet());
+
+// Logging (skip in test)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan('dev'));
+}
+
+// CORS configuration
+const parseList = (val?: string) =>
+  (val || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+const baseAllowedOrigins = [
   'http://localhost:5173', // Local development
   'https://nitzutz-spark.netlify.app', // Production frontend (Netlify)
-  process.env.FRONTEND_URL, // Optional custom URL from Railway
-].filter(Boolean);
+];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like Postman or same-origin)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+const envAllowed = parseList(process.env.CORS_ALLOWED_ORIGINS);
+const allowedOrigins = [
+  ...baseAllowedOrigins,
+  process.env.FRONTEND_URL || '',
+  ...envAllowed,
+].filter(Boolean) as string[];
+
+// Allow suffix-based matching (e.g. ".netlify.app", ".railway.app")
+const isOriginAllowed = (origin?: string | null) => {
+  if (!origin) return true; // Postman / same-origin
+  if (allowedOrigins.includes(origin)) return true;
+
+  try {
+    const { hostname } = new URL(origin);
+    // Any entry starting with "." is treated as a suffix match
+    for (const entry of allowedOrigins) {
+      if (entry.startsWith('.')) {
+        if (hostname.endsWith(entry)) return true;
+      }
     }
-  },
-  credentials: true,
-}));
+  } catch {
+    // If origin is not a valid URL, deny
+    return false;
+  }
+
+  return false;
+};
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (isOriginAllowed(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Rate limiting for AI endpoints
+const aiLimiter = rateLimit({
+  windowMs: parseInt(process.env.AI_RATE_WINDOW_MS || '60000', 10), // 1 minute
+  max: parseInt(process.env.AI_RATE_MAX || '30', 10), // 30 req/min
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use('/api/ai', aiLimiter);
 
 // Routes
 app.use('/api/books', booksRouter);
@@ -57,10 +112,12 @@ app.use('/api/ai-content', aiContentGeneratorRouter);
 app.use('/api/insights', insightsRouter);
 app.use('/api/health', healthRouter);
 
-// Serve static test page
-app.get('/test-google-auth', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../test-google-auth.html'));
-});
+// Serve static test page (dev only unless explicitly allowed)
+if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_TEST_ROUTES === 'true') {
+  app.get('/test-google-auth', (req: Request, res: Response) => {
+    res.sendFile(path.join(__dirname, '../test-google-auth.html'));
+  });
+}
 
 // Legacy health check endpoint (redirect to new)
 app.get('/health', (req: Request, res: Response) => {
@@ -68,7 +125,7 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
     message: err.message || 'Internal Server Error',
@@ -77,9 +134,19 @@ app.use((err: any, req: Request, res: Response, next: any) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on http://localhost:${PORT}`);
   console.log(`Health check: http://localhost:${PORT}/health`);
+  // Ensure default user settings record exists
+  try {
+    await prisma.userSettings.upsert({
+      where: { id: 'default-user' },
+      create: { id: 'default-user' },
+      update: {},
+    });
+  } catch (e) {
+    console.warn('Failed to ensure default user settings:', e);
+  }
   // Start background cron after server is up
   try {
     startMentorCron();
@@ -89,7 +156,14 @@ app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', async () => {
-  await prisma.$disconnect();
-  process.exit(0);
-});
+const shutdown = async (signal: string) => {
+  console.log(`Received ${signal}, shutting down gracefully...`);
+  try {
+    await prisma.$disconnect();
+  } finally {
+    process.exit(0);
+  }
+};
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));

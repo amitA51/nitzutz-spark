@@ -9,10 +9,33 @@ export class ArticleService {
   async getArticles(
     page: number = 1,
     limit: number = 10,
-    category?: string
+    category?: string,
+    includeContent: boolean = false,
   ) {
     const skip = (page - 1) * limit;
     const where = category ? { category } : {};
+
+    const select: any = {
+      id: true,
+      title: true,
+      author: true,
+      sourceUrl: true,
+      category: true,
+      publishedAt: true,
+      imageUrl: true,
+      excerpt: true,
+      readTime: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: {
+        select: {
+          savedArticles: true,
+        },
+      },
+    };
+    if (includeContent) {
+      select.content = true;
+    }
 
     const [articles, total] = await Promise.all([
       this.prisma.article.findMany({
@@ -22,31 +45,13 @@ export class ArticleService {
         orderBy: {
           createdAt: 'desc',
         },
-        select: {
-          id: true,
-          title: true,
-          content: true,
-          author: true,
-          sourceUrl: true,
-          category: true,
-          publishedAt: true,
-          imageUrl: true,
-          excerpt: true,
-          readTime: true,
-          createdAt: true,
-          updatedAt: true,
-          _count: {
-            select: {
-              savedArticles: true,
-            },
-          },
-        },
+        select,
       }),
       this.prisma.article.count({ where }),
     ]);
 
     // Map to clean DTOs with isSaved flag
-    const articlesWithStatus = articles.map(article => ({
+    const articlesWithStatus = articles.map((article: any) => ({
       ...article,
       isSaved: article._count.savedArticles > 0,
       _count: undefined, // Remove _count from response
@@ -125,9 +130,15 @@ export class ArticleService {
     excerpt?: string;
     readTime?: number;
   }) {
+    const computedReadTime =
+      typeof data.readTime === 'number'
+        ? data.readTime
+        : Math.max(1, Math.round((data.content?.split(/\s+/).filter(Boolean).length || 0) / 200)); // ~200 wpm
+
     return await this.prisma.article.create({
       data: {
         ...data,
+        readTime: computedReadTime,
         publishedAt: data.publishedAt ? new Date(data.publishedAt) : undefined,
       },
     });
