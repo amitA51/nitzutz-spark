@@ -3,6 +3,7 @@ import { prisma } from '../db';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ArticleService } from '../services/articleService';
 import { trackActivity } from '../services/activityTracker';
+import crypto from 'crypto';
 
 const router = Router();
 const articleService = new ArticleService(prisma);
@@ -90,6 +91,26 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     category as string | undefined,
     includeContentBool
   );
+
+  // Weak ETag based on ids+updatedAt+pagination+category
+  try {
+    const signature = JSON.stringify({
+      ids: result.articles.map(a => a.id),
+      updated: result.articles.map(a => a.updatedAt),
+      pagination: result.pagination,
+      category: category || '',
+    });
+    const etag = crypto.createHash('md5').update(signature).digest('hex');
+    const ifNoneMatch = req.headers['if-none-match'];
+
+    if (ifNoneMatch && ifNoneMatch === etag) {
+      res.status(304).end();
+      return;
+    }
+    res.setHeader('ETag', etag);
+  } catch {
+    // ignore ETag errors
+  }
 
   res.json(result);
 }));

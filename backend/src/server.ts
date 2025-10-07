@@ -19,6 +19,7 @@ import googleDriveRouter from './routes/googleDrive';
 import aiContentGeneratorRouter from './routes/aiContentGenerator';
 import insightsRouter from './routes/insights';
 import healthRouter from './routes/health';
+import exportRouter from './routes/export';
 import { startMentorCron } from './jobs/mentorJob';
 
 dotenv.config();
@@ -111,6 +112,7 @@ app.use('/api/google-drive', googleDriveRouter);
 app.use('/api/ai-content', aiContentGeneratorRouter);
 app.use('/api/insights', insightsRouter);
 app.use('/api/health', healthRouter);
+app.use('/api/export', exportRouter);
 
 // Serve static test page (dev only unless explicitly allowed)
 if (process.env.NODE_ENV !== 'production' || process.env.ALLOW_TEST_ROUTES === 'true') {
