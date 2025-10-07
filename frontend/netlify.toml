@@ -10,4 +10,5 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  VITE_API_URL = "https://nitzutz-backend-production-423f.up.railway.app/"
+  # Ensure API base includes /api suffix
+  VITE_API_URL = "https://nitzutz-backend-production-423f.up.railway.app/api"
