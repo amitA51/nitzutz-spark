@@ -37,20 +37,24 @@ model Summary {
 
 // Discovery Engine Models
 model Article {
-  id           String         @id @default(cuid())
-  title        String
-  content      String
-  author       String?
-  sourceUrl    String?
-  category     String
-  publishedAt  DateTime?
-  imageUrl     String?
-  excerpt      String?        // Short preview text
-  readTime     Int?           // Estimated read time in minutes
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id            String          @id @default(cuid())
+  title         String
+  content       String
+  author        String?
+  sourceUrl     String?
+  category      String
+  publishedAt   DateTime?
+  imageUrl      String?
+  excerpt       String?         // Short preview text
+  readTime      Int?            // Estimated read time in minutes
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   savedArticles SavedArticle[]
-  aiQuestions  AiQuestion[]
+  aiQuestions   AiQuestion[]
+
+  @@index([category])
+  @@index([createdAt])
+  @@index([title])
 }
 
 model SavedArticle {
@@ -61,7 +65,7 @@ model SavedArticle {
   tags               String?             // Comma-separated tags
   savedAt            DateTime            @default(now())
   spacedRepetitions  SpacedRepetition[]
-  
+
   @@unique([articleId]) // Each article can only be saved once
 }
 
@@ -96,7 +100,7 @@ model ConceptMention {
   bookId     String?  // If mentioned in a book
   context    String?  // Surrounding text
   createdAt  DateTime @default(now())
-  
+
   @@index([concept])
 }
 
@@ -109,7 +113,7 @@ model UserSettings {
   theme           String   @default("dark")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   @@unique([id]) // Single user app
 }
 
@@ -134,4 +138,6 @@ model UserActivity {
   targetId   String
   metadata   String?  // JSON extra info
   createdAt  DateTime @default(now())
+
+  @@index([createdAt])
 }

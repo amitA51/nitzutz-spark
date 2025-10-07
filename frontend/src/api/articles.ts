@@ -35,11 +35,12 @@ export interface SearchResponse {
 export const articlesAPI = {
   /**
    * Get paginated articles with optional category filter
+   * includeContent defaults to true to preserve current UI behavior.
    */
-  getAll: async (page: number = 1, limit: number = 10, category?: string): Promise<ArticlesResponse> => {
-    const params: any = { page, limit };
+  getAll: async (page: number = 1, limit: number = 10, category?: string, includeContent: boolean = true): Promise<ArticlesResponse> => {
+    const params: any = { page, limit, includeContent: includeContent ? 1 : 0 };
     if (category) params.category = category;
-    
+
     const response = await apiClient.get<ArticlesResponse>('/articles', { params });
     return response.data;
   },

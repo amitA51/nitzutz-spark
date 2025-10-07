@@ -9,7 +9,7 @@ A full-stack personal knowledge management and discovery application for a singl
 - **Summary Management**: Rich text editor for creating and organizing book summaries
 - **Chapter Organization**: Organize summaries by chapters with page ranges
 - **Progress Tracking**: Visual progress bars for book completion
-- **Google Drive Integration** (Coming in Stage 3): Import summaries from Google Drive
+- **Google Drive Integration** (Stage 3): Import summaries from Google Drive
 
 ### 🔍 Discovery Engine (/)
 - **Article Feed**: Browse articles one at a time with smooth navigation
@@ -22,7 +22,7 @@ A full-stack personal knowledge management and discovery application for a singl
 
 ### Backend
 - **Node.js** with Express and TypeScript
-- **Prisma ORM** with SQLite database
+- **Prisma ORM** with **PostgreSQL** database
 - **RESTful API** architecture
 - Environment-based configuration
 
@@ -38,8 +38,9 @@ A full-stack personal knowledge management and discovery application for a singl
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v16 or higher)
+- Node.js (v18 or higher recommended)
 - npm or yarn
+- PostgreSQL (local via Docker or hosted via Railway)
 
 ### Installation
 
@@ -49,27 +50,31 @@ git clone <repository-url>
 cd nitzutz-spark
 ```
 
-2. Install backend dependencies:
+2. Backend setup:
 ```bash
 cd backend
 npm install
+cp .env.example .env
+# Edit .env with your DATABASE_URL and other settings
 ```
 
-3. Set up the database:
+3. Database migration:
 ```bash
 npx prisma migrate dev
 ```
 
-4. Seed dummy articles (optional):
+4. (Optional) Seed dummy articles:
 ```bash
-# Start the backend server first, then make a POST request to:
-# http://localhost:5000/api/articles/seed
+# Start the backend server first, then:
+curl -X POST http://localhost:5000/api/articles/seed \
+  -H "x-seed-token: your-seed-token"  # Only required in production
 ```
 
-5. Install frontend dependencies:
+5. Frontend setup:
 ```bash
 cd ../frontend
 npm install
+cp .env.example .env
 ```
 
 ### Running the Application
@@ -79,34 +84,49 @@ npm install
 cd backend
 npm run dev
 ```
-The backend will run on http://localhost:5000
+Backend runs on http://localhost:5000
 
 2. In a new terminal, start the frontend:
 ```bash
 cd frontend
 npm run dev
 ```
-The frontend will run on http://localhost:5173
+Frontend runs on http://localhost:5173
 
-3. Open your browser and navigate to http://localhost:5173
+3. Open your browser at http://localhost:5173
 
 ## Environment Variables
 
 ### Backend (.env)
 ```env
-DATABASE_URL="file:./dev.db"
+# Core
+DATABASE_URL="postgresql://user:password@localhost:5432/nitzutz_spark"
 PORT=5000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:5173
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:5173,.netlify.app,.railway.app
 
 # AI Configuration
-AI_API_KEY=your_huggingface_api_key
+AI_API_KEY=your_api_key_here
 AI_BASE_URL=https://router.huggingface.co/v1
 AI_MODEL=deepseek-ai/DeepSeek-V3.2-Exp:novita
 
-# Google Drive (Coming in Stage 3)
+# AI Rate Limiting (optional)
+AI_RATE_WINDOW_MS=60000
+AI_RATE_MAX=30
+
+# Google Drive OAuth
 GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 GOOGLE_REDIRECT_URI=http://localhost:5000/auth/google/callback
+
+# Seed protection (production)
+SEED_TOKEN=your_seed_token
+
+# Encryption (optional, for Google Drive tokens)
+SECRET_KEY=change-me # 32-byte hex or any string (hashed to 256-bit)
 ```
 
 ### Frontend (.env)
@@ -132,8 +152,8 @@ nitzutz-spark/
 ├── frontend/
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
-│   │   ├── pages/         # Page components
-│   │   └── App.tsx        # Main app component with routing
+│   │   ├── pages/          # Page components
+│   │   └── App.tsx         # Main app component with routing
 │   └── package.json
 └── README.md
 ```
@@ -154,11 +174,11 @@ nitzutz-spark/
 - `DELETE /api/summaries/:id` - Delete summary
 
 ### Articles
-- `GET /api/articles` - Get articles with pagination
+- `GET /api/articles` - Get articles with pagination (supports includeContent=0/1)
 - `GET /api/articles/:id` - Get single article
 - `POST /api/articles` - Create new article
 - `GET /api/articles/categories/list` - Get all categories
-- `POST /api/articles/seed` - Seed dummy articles
+- `POST /api/articles/seed` - Seed dummy articles (protected in production)
 
 ### Saved Articles
 - `GET /api/saved-articles` - Get all saved articles
@@ -176,42 +196,6 @@ nitzutz-spark/
 - `PUT /api/settings` - Update user settings
 - `DELETE /api/settings/ai-key` - Clear AI API key
 
-## Development Roadmap
-
-### Stage 1 (MVP) ✅
-- Full Personal Library (without Google Drive import)
-- Discovery Engine layout with dummy articles
-- Functional routing between sections
-
-### Stage 2 (In Progress)
-- Dynamic article feed with pagination
-- Save functionality for articles
-- Category filtering
-
-### Stage 3 (Planned)
-- Google Drive integration for summary import
-- Contextual AI Assistant with real API integration
-- Advanced search and filtering options
-
-## Design Principles
-
-- **Dark Mode Only**: Pure black background (#000000) with white text (#FFFFFF)
-- **Gradient Accent**: Blue to purple gradient (#3B82F6 → #818CF8) for interactive elements
-- **Dual Font Strategy**:
-  - **Inter**: UI elements, headings, buttons
-  - **IBM Plex Serif**: Content, articles, long-form text
-- **Smooth Animations**: Framer Motion for micro-interactions and transitions
-- **Minimalist Design**: Clean, professional interface
-- **Single User Focus**: Designed for personal use without multi-user complexity
-
-## Contributing
-
-This is a personal project, but suggestions and improvements are welcome. Please open an issue to discuss proposed changes.
-
-## License
-
-This project is for personal use. Please contact the author for any other use cases.
-
 ## Deployment
 
 ### Current Setup
@@ -221,8 +205,17 @@ This project is for personal use. Please contact the author for any other use ca
 ### Seed Articles
 After deployment, seed initial articles:
 ```bash
-curl -X POST https://your-backend-url.railway.app/api/articles/seed
+curl -X POST https://your-backend-url.railway.app/api/articles/seed \
+  -H "x-seed-token: your-seed-token"
 ```
+
+## Contributing
+
+This is a personal project, but suggestions and improvements are welcome. Please open an issue to discuss proposed changes.
+
+## License
+
+This project is for personal use. Please contact the author for any other use cases.
 
 ## Support
 

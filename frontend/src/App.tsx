@@ -10,13 +10,14 @@ import { MobileNav } from './components/MobileNav';
 import { useIsMobile } from './hooks/useMediaQuery';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AIContentGenerator } from './components/AIContentGenerator';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { insightsAPI } from './api/insights';
-
 
 function App() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+
   const { data: insightsData } = useQuery({
     queryKey: ['insights-count'],
     queryFn: () => insightsAPI.getAll(),
@@ -35,7 +36,7 @@ function App() {
       <div className="min-h-screen bg-background text-foreground" dir="rtl">
         {/* Mobile Navigation Drawer */}
         <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-        
+
         {/* Navigation Header */}
         <header className="border-b border-gray-light bg-gray-dark sticky top-0 z-30">
           <div className="container mx-auto px-4">
@@ -52,9 +53,9 @@ function App() {
                     </svg>
                   </button>
                 )}
-                
+
                 {/* App Title with Gradient */}
-                <motion.h1 
+                <motion.h1
                   className="text-xl md:text-2xl font-bold text-gradient font-sans"
                   whileHover={{ scale: 1.05 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
@@ -64,7 +65,7 @@ function App() {
                 {/* Desktop Navigation */}
                 {!isMobile && <GooeyNav items={navItems} />}
               </div>
-              
+
               {/* Settings Button */}
               <motion.div
                 whileHover={{ scale: 1.1, rotate: 90 }}
@@ -73,7 +74,7 @@ function App() {
               >
                 <Link to="/settings" className="text-gray-300 hover:text-primary p-2 rounded-lg hover:bg-gray-medium transition-all block">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 001.066 2.573c-.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </Link>
@@ -81,11 +82,11 @@ function App() {
             </nav>
           </div>
         </header>
-        
+
         {/* Main Content */}
         <main className="container mx-auto px-4 py-4 md:py-8">
           <Suspense fallback={
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex items-center justify-center h-64"
@@ -108,11 +109,13 @@ function App() {
             </Routes>
           </Suspense>
         </main>
-        
+
         {/* AI Content Generator - Floating Button */}
         <AIContentGenerator onGenerated={() => {
-          // Refresh the page after generating new content
-          window.location.reload();
+          // Refresh lists after generating new content
+          queryClient.invalidateQueries({ queryKey: ['articles'] });
+          queryClient.invalidateQueries({ queryKey: ['categories'] });
+          queryClient.invalidateQueries({ queryKey: ['insights-count'] });
         }} />
       </div>
       </ErrorBoundary>
