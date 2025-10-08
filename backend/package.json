@@ -40,7 +40,8 @@
     "nitzutz-spark": "file:..",
     "node-cron": "^3.0.3",
     "openai": "^4.104.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "prisma": "^6.17.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
