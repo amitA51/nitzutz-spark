@@ -37,12 +37,12 @@ router.post('/ask', requireAI, async (req: Request, res: Response) => {
     const selectedModel = model || getDefaultModel();
 
     // Adjust system message based on mode
-    let systemMessage = 'You are a helpful assistant that answers questions about the provided article.';
+    let systemMessage = 'You are an expert polymath assistant. Your goal is to provide insightful, clear, and well-structured answers based *only* on the provided article text. Use Markdown for formatting (e.g., **bold**, *italics*, bullet points). Be concise yet comprehensive. If the question is in Hebrew, answer in Hebrew.';
     if (categoryHint) {
       systemMessage += ` Focus your reasoning on the domain/category: ${categoryHint}. Prefer domain-specific terminology and context.`;
     }
     if (mode === 'devils-advocate') {
-      systemMessage = 'You are a critical thinking assistant. Your role is to challenge arguments, present counter-arguments, identify logical fallacies, and highlight alternative perspectives. Be constructive but rigorous in your analysis.';
+      systemMessage = 'You are a brilliant and sharp critical thinking assistant. Your role is to rigorously challenge arguments, present sophisticated counter-arguments, identify logical fallacies, and highlight alternative perspectives. Be constructive but unflinching in your analysis. Use Markdown for structure.';
     }
 
     const messages = [
@@ -129,7 +129,7 @@ router.post('/extract-key-points', requireAI, async (req: Request, res: Response
     const messages = [
       { 
         role: 'system', 
-        content: 'אתה עוזר שמסיק נקודות מפתח ממאמרים. ספק 3-5 נקודות תמציתיות ומדויקות בעברית שמסכמות את התובנות החשובות ביותר. כל נקודה צריכה להיות משפט אחד ברור ומעשי. החזר JSON array של מחרוזות בעברית בלבד.' 
+        content: 'You are a professional summarizer. Your task is to extract the 3-5 most critical key takeaways from the provided text. Return ONLY a valid JSON array of strings: ["Point 1", "Point 2", ...]. The points should be concise, insightful, and capture the essence of the article. Respond in Hebrew.' 
       },
       { 
         role: 'user', 
@@ -194,7 +194,7 @@ router.post('/find-connections', requireAI, async (req: Request, res: Response) 
     const messages = [
       { 
         role: 'system', 
-        content: 'You are a knowledge connection assistant. Analyze the current article and find meaningful connections to the user\'s existing knowledge (books and saved articles). Return a JSON array of connections with format: [{"type": "book" | "article" | "contradiction", "title": "...", "relation": "short description of connection", "id": "item_id"}]. Maximum 5 connections. Focus on conceptual links, shared themes, or contradictions.' 
+        content: 'You are a brilliant research assistant, skilled at synthesizing information and finding non-obvious connections. Analyze the current article and find meaningful connections (conceptual links, shared themes, contradictions, or influences) to the user\'s existing knowledge base (books and saved articles). Return a JSON array of up to 5 connections with the format: [{"type": "book" | "article" | "contradiction", "title": "...", "relation": "A short, insightful description of the connection", "id": "item_id"}]. Focus on depth and quality over quantity.' 
       },
       { 
         role: 'user', 
@@ -221,33 +221,133 @@ router.post('/find-connections', requireAI, async (req: Request, res: Response) 
   }
 });
 
-// Get concept cloud - most frequently mentioned concepts
+// Get concept cloud - AI-powered concept extraction
 router.get('/concept-cloud', async (_req: Request, res: Response) => {
   try {
-    const concepts = await prisma.conceptMention.groupBy({
-      by: ['concept'],
-      _count: {
-        concept: true,
-      },
-      orderBy: {
+    // Try to get from database first (if conceptMention table exists)
+    try {
+      const concepts = await prisma.conceptMention.groupBy({
+        by: ['concept'],
         _count: {
-          concept: 'desc',
+          concept: true,
         },
-      },
+        orderBy: {
+          _count: {
+            concept: 'desc',
+          },
+        },
+        take: 20,
+      });
+
+      const formattedConcepts = concepts.map(c => ({
+        concept: c.concept,
+        count: c._count.concept,
+      }));
+
+      if (formattedConcepts.length > 0) {
+        return res.json({ concepts: formattedConcepts });
+      }
+    } catch (dbError) {
+      console.log('ConceptMention table not found, using AI extraction');
+    }
+
+    // Fallback: Use AI to extract concepts from saved articles and books
+    const savedArticles = await prisma.savedArticle.findMany({
+      include: { article: true },
+      take: 50,
+    });
+
+    const books = await prisma.book.findMany({
+      include: { summaries: true },
       take: 20,
     });
 
-    const formattedConcepts = concepts.map(c => ({
-      concept: c.concept,
-      count: c._count.concept,
-    }));
+    if (savedArticles.length === 0 && books.length === 0) {
+      return res.json({ concepts: [] });
+    }
 
-    res.json({ concepts: formattedConcepts });
+    // Build combined text for AI analysis
+    const articlesText = savedArticles
+      .map(sa => `${sa.article.title}: ${sa.article.content.substring(0, 300)}`)
+      .join('\n');
+    
+    const booksText = books
+      .map(b => {
+        const summariesText = b.summaries.map(s => s.content.substring(0, 200)).join(' ');
+        return `${b.bookTitle}: ${summariesText}`;
+      })
+      .join('\n');
+
+    const combinedText = `${articlesText}\n\n${booksText}`.substring(0, 3000);
+
+    // Use AI to extract key concepts
+    const aiEnabled = await isAIEnabledAsync();
+    if (aiEnabled) {
+      const ai = await createAIClientFromAny();
+      const model = getDefaultModel();
+      
+      const messages = [
+        {
+          role: 'system',
+          content: 'You are a data scientist specializing in NLP and knowledge management. Extract the 15-20 most significant and recurring concepts from the provided texts. Group related concepts. Return ONLY a valid JSON array of objects with the format: [{"concept": "Concept Name", "count": estimated_frequency, "category": "tech/philosophy/science/security/other", "relatedTo": ["Related Concept 1", ...]}]. Use both English and Hebrew. Prioritize technical terms, theories, and key ideas.'
+        },
+        {
+          role: 'user',
+          content: `Analyze these texts and extract key recurring concepts:\n\n${combinedText}`
+        }
+      ] as const;
+
+      try {
+        const completion = await chatCompletion(ai, model, messages as any);
+        const responseText = completion.choices?.[0]?.message?.content || '[]';
+        
+        // Try to parse JSON
+        let concepts = JSON.parse(responseText.replace(/```json|```/g, '').trim());
+        
+        return res.json({ concepts });
+      } catch (aiError) {
+        console.error('AI concept extraction failed:', aiError);
+      }
+    }
+
+    // Final fallback: Extract simple keywords
+    const simpleKeywords = extractSimpleKeywords(combinedText);
+    res.json({ concepts: simpleKeywords });
+
   } catch (error: any) {
     console.error('Error fetching concept cloud:', error);
     res.status(500).json({ error: 'Failed to fetch concept cloud', details: error.message });
   }
 });
+
+// Helper function to extract simple keywords
+function extractSimpleKeywords(text: string): Array<{concept: string, count: number, category: string}> {
+  const keywords = [
+    { pattern: /\b(AI|בינה מלאכותית|machine learning|deep learning)/gi, category: 'tech' },
+    { pattern: /\b(security|אבטחה|cyber|סייבר)/gi, category: 'security' },
+    { pattern: /\b(philosophy|פילוסופיה|ethics|אתיקה)/gi, category: 'philosophy' },
+    { pattern: /\b(psychology|פסיכולוגיה|cognitive|קוגניטיבי)/gi, category: 'science' },
+  ];
+
+  const conceptMap = new Map<string, {count: number, category: string}>();
+
+  keywords.forEach(({ pattern, category }) => {
+    const matches = text.match(pattern);
+    if (matches) {
+      const normalized = matches[0].toLowerCase();
+      const existing = conceptMap.get(normalized);
+      conceptMap.set(normalized, {
+        count: (existing?.count || 0) + matches.length,
+        category
+      });
+    }
+  });
+
+  return Array.from(conceptMap.entries())
+    .map(([concept, data]) => ({ concept, ...data }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 15);
+}
 
 // Ask AI about a specific summary
 router.post('/summary/ask', requireAI, async (req: Request, res: Response) => {
@@ -264,7 +364,7 @@ router.post('/summary/ask', requireAI, async (req: Request, res: Response) => {
 
     const model = getDefaultModel();
     const messages = [
-      { role: 'system', content: 'You are a helpful assistant. Answer questions based only on the provided book summary text (Hebrew allowed). Be concise and clear.' },
+      { role: 'system', content: 'You are a subject matter expert. Answer questions based *only* on the provided book summary text. Provide answers in clear, well-structured Markdown format. If the question is in Hebrew, respond in Hebrew.' },
       { role: 'user', content: `Book: ${summary.book?.bookTitle || ''}\nSummary Title: ${summary.chapterTitle || ''}\nSummary Content:\n${summary.content}\n\nQuestion: ${question}` }
     ] as const;
 
@@ -291,12 +391,12 @@ router.post('/summary/shorten', requireAI, async (req: Request, res: Response) =
     }
     const model = getDefaultModel();
     const style = length === 'bullet'
-      ? 'החזר 3-5 נקודות תמציתיות בבולטים.'
+      ? 'Return 3-5 concise, impactful bullet points in Markdown.'
       : length === 'medium'
-        ? 'החזר תקציר תמציתי של 5-7 משפטים.'
-        : 'החזר תקציר קצר של 2-3 משפטים בלבד.';
+        ? 'Return a rich, well-structured paragraph of 5-7 sentences.'
+        : 'Return a single, highly condensed sentence (a thesis statement).'
     const messages = [
-      { role: 'system', content: 'אתה מסכם טקסטים בעברית בצורה מקצועית, ברורה וקריאה.' },
+      { role: 'system', content: 'You are a professional editor and summarizer. Your task is to distill the provided text according to the user\'s requested style. The output must be in high-quality Hebrew and use Markdown for formatting.' },
       { role: 'user', content: `סכם את הסיכום הבא בהתאם להנחיות: ${style}\n\nכותרת: ${summary.chapterTitle || ''}\nספר: ${summary.book?.bookTitle || ''}\nתוכן:\n${summary.content}` }
     ] as const;
     const ai = await createAIClientFromAny();

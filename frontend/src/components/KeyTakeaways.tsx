@@ -105,20 +105,20 @@ const KeyTakeaways: React.FC<KeyTakeawaysProps> = ({ articleId }) => {
 
   return (
     <div>
-      <ul className="space-y-2">
+      <ul className="space-y-3">
         {displayedPoints.map((point, index) => (
           <motion.li 
             key={index} 
-            className="flex items-start"
+            className="flex items-start gap-2"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.05 }}
             whileHover={{ x: 3 }}
           >
-            <span className="bg-gradient-accent text-white font-bold rounded-full w-5 h-5 flex items-center justify-center ml-2 mt-0.5 flex-shrink-0 text-[10px]">
+            <span className="bg-gradient-to-br from-blue-500 to-purple-500 text-white font-semibold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0 text-[10px] shadow-md">
               {index + 1}
             </span>
-            <span className="text-xs text-gray-300 leading-snug font-serif">
+            <span className="text-sm text-gray-200 leading-relaxed font-serif">
               {point.replace(/^[-•*]\s*/, '').replace(/^"\s*|\s*"$/g, '')}
             </span>
           </motion.li>

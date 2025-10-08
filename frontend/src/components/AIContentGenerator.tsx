@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { aiContentAPI, type GenerateContentOptions, type UserProfile, type ProfileResponse } from '../api/aiContent';
+import { aiContentAPI, type GenerateContentOptions, type UserProfile } from '../api/aiContent';
 import { googleDriveAPI } from '../api/googleDrive';
 
 interface AIContentGeneratorProps {
@@ -108,16 +108,6 @@ export const AIContentGenerator: React.FC<AIContentGeneratorProps> = ({ onGenera
       
       // הצג מידע מפורט על התוצאות
       let successMessage = result.message;
-      if (result.personalized && result.articles?.length > 0) {
-        const article = result.articles[0];
-        if (article.personalityMatch) {
-          successMessage += ` (ציון התאמה: ${article.personalityMatch}%)`;
-        }
-        if (article.difficulty) {
-          successMessage += ` - רמה: ${article.difficulty === 'beginner' ? 'מתחיל' : 
-            article.difficulty === 'intermediate' ? 'בינוני' : 'מתקדם'}`;
-        }
-      }
       
       setSuccess(successMessage);
       

@@ -346,40 +346,24 @@ const DiscoveryPage = () => {
               </div>
               
               {/* Navigation Controls */}
-              <div className="mt-6 space-y-6 bg-gradient-to-br from-gray-dark via-gray-medium/30 to-gray-dark p-6 rounded-2xl border border-primary/30 shadow-2xl">
+              <div className="mt-4 space-y-3">
                 {/* Progress Indicator with Article Count */}
                 <div className="space-y-4">
-                  {/* Article Counter - Prominent */}
+                  {/* Article Counter - Colorful */}
                   <div className="flex justify-center">
-                    <motion.div 
-                      className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-700 px-8 py-4 rounded-2xl shadow-2xl"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      {/* Glow effect */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-2xl blur-xl"></div>
-                      
-                      <div className="relative flex items-baseline gap-3">
-                        <motion.span 
-                          className="text-5xl font-black text-white font-sans drop-shadow-lg"
-                          key={currentIndex}
-                          initial={{ scale: 1.2, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          {currentIndex + 1}
-                        </motion.span>
-                        <span className="text-3xl text-white/90 font-sans font-bold">
-                          /
-                        </span>
-                        <span className="text-4xl font-bold text-white/95 font-sans">
-                          {deckArticles.length}
-                        </span>
-                      </div>
-                      <div className="relative text-sm text-white/90 text-center mt-2 font-sans font-semibold tracking-wider">
-                        🎴 כרטיסיות
-                      </div>
-                    </motion.div>
+                    <div className="text-sm font-sans">
+                      <motion.span 
+                        className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 font-semibold"
+                        key={currentIndex}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        {currentIndex + 1}
+                      </motion.span>
+                      <span className="text-gray-500 mx-1">/</span>
+                      <span className="text-gray-400">{deckArticles.length}</span>
+                    </div>
                   </div>
 
                   {/* Progress Dots/Bar */}
@@ -425,77 +409,43 @@ const DiscoveryPage = () => {
                   </div>
                 </div>
 
-                {/* Navigation Buttons */}
-                <div className="flex items-center justify-center gap-6">
-                  {/* Previous Button */}
+                {/* Navigation Buttons - Colorful & Subtle */}
+                <div className="flex items-center justify-center gap-2 text-xs">
+                  {/* Previous */}
                   <motion.button
                     onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
                     disabled={currentIndex === 0}
-                    className={`group relative flex flex-col items-center gap-2 px-10 py-5 rounded-2xl font-bold transition-all min-w-[160px] overflow-hidden ${
+                    className={`flex items-center gap-1 px-2 py-1 rounded transition-all ${
                       currentIndex === 0 
-                        ? 'bg-gray-medium/40 text-gray-500 cursor-not-allowed border-2 border-gray-light/20' 
-                        : 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white shadow-2xl border-2 border-blue-400/50'
+                        ? 'text-gray-600 cursor-not-allowed opacity-30' 
+                        : 'text-blue-400 hover:text-blue-300 hover:bg-blue-500/10'
                     }`}
-                    whileHover={currentIndex > 0 ? { scale: 1.1, y: -5 } : {}}
-                    whileTap={currentIndex > 0 ? { scale: 0.92 } : {}}
+                    whileHover={currentIndex > 0 ? { scale: 1.02 } : {}}
                   >
-                    {/* Shimmer effect on hover */}
-                    {currentIndex > 0 && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        initial={{ x: '-100%' }}
-                        whileHover={{ x: '100%' }}
-                        transition={{ duration: 0.5 }}
-                      />
-                    )}
-                    
-                    <svg className="w-10 h-10 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                     </svg>
-                    <span className="text-xl font-sans relative z-10">⛖ קודם</span>
-                    {currentIndex > 0 && (
-                      <span className="text-xs text-white/80 font-bold relative z-10">← Left</span>
-                    )}
+                    <span className="font-sans">קודם</span>
                   </motion.button>
                   
-                  {/* Keyboard Shortcuts Hint */}
-                  <div className="flex flex-col items-center gap-1 px-4">
-                    <div className="text-xs text-gray-400 font-sans">⏱️ קיצורים</div>
-                    <div className="flex gap-2">
-                      <kbd className="px-2 py-1 bg-gray-medium text-gray-300 rounded text-xs font-mono border border-gray-light shadow-sm">←</kbd>
-                      <kbd className="px-2 py-1 bg-gray-medium text-gray-300 rounded text-xs font-mono border border-gray-light shadow-sm">→</kbd>
-                    </div>
-                  </div>
+                  {/* Divider */}
+                  <span className="text-gray-600 mx-1">•</span>
                   
-                  {/* Next Button */}
+                  {/* Next */}
                   <motion.button
                     onClick={() => setCurrentIndex(Math.min(deckArticles.length - 1, currentIndex + 1))}
                     disabled={currentIndex === deckArticles.length - 1}
-                    className={`group relative flex flex-col items-center gap-2 px-10 py-5 rounded-2xl font-bold transition-all min-w-[160px] overflow-hidden ${
+                    className={`flex items-center gap-1 px-2 py-1 rounded transition-all ${
                       currentIndex === deckArticles.length - 1
-                        ? 'bg-gray-medium/40 text-gray-500 cursor-not-allowed border-2 border-gray-light/20' 
-                        : 'bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white shadow-2xl border-2 border-purple-400/50'
+                        ? 'text-gray-600 cursor-not-allowed opacity-30' 
+                        : 'text-purple-400 hover:text-purple-300 hover:bg-purple-500/10'
                     }`}
-                    whileHover={currentIndex < deckArticles.length - 1 ? { scale: 1.1, y: -5 } : {}}
-                    whileTap={currentIndex < deckArticles.length - 1 ? { scale: 0.92 } : {}}
+                    whileHover={currentIndex < deckArticles.length - 1 ? { scale: 1.02 } : {}}
                   >
-                    {/* Shimmer effect on hover */}
-                    {currentIndex < deckArticles.length - 1 && (
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                        initial={{ x: '-100%' }}
-                        whileHover={{ x: '100%' }}
-                        transition={{ duration: 0.5 }}
-                      />
-                    )}
-                    
-                    <svg className="w-10 h-10 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    <span className="font-sans">הבא</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                     </svg>
-                    <span className="text-xl font-sans relative z-10">הבא ⛗</span>
-                    {currentIndex < deckArticles.length - 1 && (
-                      <span className="text-xs text-white/80 font-bold relative z-10">Right →</span>
-                    )}
                   </motion.button>
                 </div>
               </div>
@@ -682,17 +632,24 @@ const DiscoveryPage = () => {
             </div>
             
             {/* AI Responses */}
-            <div className="space-y-2 max-h-48 overflow-y-auto">
+            <div className="space-y-3 max-h-56 overflow-y-auto pr-2">
               {aiResponses.length > 0 ? (
                 aiResponses.map((response, idx) => (
-                  <div key={idx} className="border-t border-gray-light pt-2">
-                    <p className="text-xs text-gradient font-semibold mb-0.5 font-sans">ש: {response.question}</p>
-                    <p className="text-xs text-gray-300 font-serif leading-snug">ת: {response.answer}</p>
-                  </div>
+                  <motion.div 
+                    key={idx} 
+                    className="prose prose-sm prose-invert max-w-none text-gray-300 font-serif leading-relaxed border-t border-gray-light/20 pt-3"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                  >
+                    <p className="text-sm text-gradient font-sans font-semibold mb-1">ש: {response.question}</p>
+                    <div dangerouslySetInnerHTML={{ __html: response.answer.replace(/\n/g, '<br />') }} />
+                  </motion.div>
                 ))
               ) : (
-                <p className="text-xs text-gray-400">
-                  שאל שאלות...
+                <p className="text-xs text-center text-gray-500 pt-4 font-sans">
+                  שאל שאלות על המאמר...<br/>
+                  או נסה את מצב 'סנגור השטן' 😈
                 </p>
               )}
             </div>

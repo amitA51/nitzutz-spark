@@ -35,6 +35,7 @@
     "helmet": "^7.1.0",
     "lru-cache": "^11.2.2",
     "morgan": "^1.10.0",
+    "nitzutz-spark": "file:..",
     "node-cron": "^3.0.3",
     "openai": "^4.104.0",
     "pg": "^8.16.3"
