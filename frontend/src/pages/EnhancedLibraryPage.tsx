@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { motion } from 'framer-motion';
 import { booksAPI, summariesAPI } from '../api';
 import { googleDriveAPI } from '../api/googleDrive';
-import { GoogleDrivePicker } from '../components/GoogleDrivePicker';
-import { SummaryBubble } from '../components/SummaryBubble';
-import SummaryAI from '../components/SummaryAI';
+const GoogleDrivePicker = lazy(() => import('../components/GoogleDrivePicker').then(m => ({ default: m.GoogleDrivePicker })));
+const SummaryBubble = lazy(() => import('../components/SummaryBubble').then(m => ({ default: m.SummaryBubble })));
+const SummaryAI = lazy(() => import('../components/SummaryAI'));
 import { useIsMobile } from '../hooks/useMediaQuery';
 
 interface Book {
@@ -299,32 +299,38 @@ const EnhancedLibraryPage: React.FC = () => {
             <div className="space-y-6">
               {summaries.map((summary) => (
                 <div key={summary.id} className="space-y-3">
-                  <SummaryBubble
-                    title={summary.title}
-                    bookTitle={selectedBook.title}
-                    bookAuthor={selectedBook.author}
-                    content={summary.content}
-                    keyTakeaways={summary.keyTakeaways}
-                    personalNotes={summary.personalNotes}
-                    rating={summary.rating}
-                    createdAt={summary.createdAt}
-                    sourceType={summary.importedFrom as any}
-                    googleDriveLink={summary.googleDriveMetadata?.webViewLink}
-                    relatedTopics={selectedBook.tags}
-                    onTopicClick={(topic) => setSearchTerm(topic)}
-                  />
-                  <SummaryAI summaryId={summary.id} />
+                  <Suspense fallback={<div className="p-3 text-sm text-gray-500">טוען סיכום...</div>}>
+                    <SummaryBubble
+                      title={summary.title}
+                      bookTitle={selectedBook.title}
+                      bookAuthor={selectedBook.author}
+                      content={summary.content}
+                      keyTakeaways={summary.keyTakeaways}
+                      personalNotes={summary.personalNotes}
+                      rating={summary.rating}
+                      createdAt={summary.createdAt}
+                      sourceType={summary.importedFrom as any}
+                      googleDriveLink={summary.googleDriveMetadata?.webViewLink}
+                      relatedTopics={selectedBook.tags}
+                      onTopicClick={(topic) => setSearchTerm(topic)}
+                    />
+                  </Suspense>
+                  <Suspense fallback={<div className="text-xs text-gray-500">טוען AI...</div>}>
+                    <SummaryAI summaryId={summary.id} />
+                  </Suspense>
                 </div>
               ))}
             </div>
           </motion.div>
         )}
       </div>
-      <GoogleDrivePicker
-        isOpen={showDrivePicker}
-        onClose={() => setShowDrivePicker(false)}
-        onImportSuccess={handleImportSuccess}
-      />
+      <Suspense fallback={<div />}>
+        <GoogleDrivePicker
+          isOpen={showDrivePicker}
+          onClose={() => setShowDrivePicker(false)}
+          onImportSuccess={handleImportSuccess}
+        />
+      </Suspense>
     </div>
   );
 };

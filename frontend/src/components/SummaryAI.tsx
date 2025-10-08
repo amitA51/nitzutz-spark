@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import apiClient from '../api/client';
-
+const MarkdownView = lazy(() => import('../components/MarkdownView'));
 interface SummaryAIProps {
   summaryId: string;
 }
@@ -72,13 +72,17 @@ const SummaryAI: React.FC<SummaryAIProps> = ({ summaryId }) => {
               {answer && (
                 <div className="mb-2">
                   <div className="text-xs text-gray-500 mb-1">תשובת AI:</div>
-                  <div className="text-gray-800 whitespace-pre-wrap text-sm">{answer}</div>
+                  <Suspense fallback={<div className="text-xs text-gray-500">טוען תשובה...</div>}>
+                    <MarkdownView markdown={answer} />
+                  </Suspense>
                 </div>
               )}
               {shortText && (
                 <div>
                   <div className="text-xs text-gray-500 mb-1">סיכום קצר:</div>
-                  <div className="text-gray-800 whitespace-pre-wrap text-sm">{shortText}</div>
+                  <Suspense fallback={<div className="text-xs text-gray-500">טוען סיכום קצר...</div>}>
+                    <MarkdownView markdown={shortText} />
+                  </Suspense>
                 </div>
               )}
             </div>

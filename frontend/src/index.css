@@ -1,9 +1,114 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=IBM+Plex+Serif:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Sora:wght@300;400;600;700&family=IBM+Plex+Serif:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Design tokens (Preset A — Neo‑glassmorphism) */
+:root {
+  --color-bg: #0B1220;
+  --color-surface-1: rgba(15, 23, 42, 0.60);
+  --color-surface-2: rgba(15, 23, 42, 0.75);
+  --color-overlay: rgba(255, 255, 255, 0.06);
+
+  --color-text: #E5E7EB;
+  --color-muted: #94A3B8;
+
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-contrast: #0B1220;
+
+  --color-accent: #06B6D4;
+  --color-accent-hover: #0891B2;
+  --color-accent-contrast: #0B1220;
+
+  /* Legacy gray aliases retained */
+  --color-gray-dark: #0F172A;   /* slate-900-ish */
+  --color-gray-medium: #1E293B; /* slate-800 */
+  --color-gray-light: #334155;  /* slate-700 */
+
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-hairline-highlight: rgba(255, 255, 255, 0.14);
+}
+
+/* Explicit theme classes */
+.theme-dark {
+  --color-bg: #0B1220;
+  --color-surface-1: rgba(15, 23, 42, 0.60);
+  --color-surface-2: rgba(15, 23, 42, 0.75);
+  --color-overlay: rgba(255, 255, 255, 0.06);
+
+  --color-text: #E5E7EB;
+  --color-muted: #94A3B8;
+
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-contrast: #0B1220;
+
+  --color-accent: #06B6D4;
+  --color-accent-hover: #0891B2;
+  --color-accent-contrast: #0B1220;
+
+  --color-gray-dark: #0F172A;
+  --color-gray-medium: #1E293B;
+  --color-gray-light: #334155;
+
+  --border-hairline: rgba(255, 255, 255, 0.08);
+  --border-hairline-highlight: rgba(255, 255, 255, 0.14);
+}
+
+.theme-light {
+  --color-bg: #F8FAFC;
+  --color-surface-1: rgba(255, 255, 255, 0.60);
+  --color-surface-2: rgba(255, 255, 255, 0.75);
+  --color-overlay: rgba(0, 0, 0, 0.06);
+
+  --color-text: #0F172A;
+  --color-muted: #475569;
+
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-contrast: #FFFFFF;
+
+  --color-accent: #06B6D4;
+  --color-accent-hover: #0891B2;
+  --color-accent-contrast: #0F172A;
+
+  --color-gray-dark: #E2E8F0;
+  --color-gray-medium: #CBD5E1;
+  --color-gray-light: #94A3B8;
+
+  --border-hairline: rgba(0, 0, 0, 0.10);
+  --border-hairline-highlight: rgba(255, 255, 255, 0.40);
+}
+
+/* System preference fallback (when no explicit theme class is set) */
+@media (prefers-color-scheme: light) {
+  :root:not(.theme-dark):not(.theme-light) {
+    --color-bg: #F8FAFC;
+    --color-surface-1: rgba(255, 255, 255, 0.60);
+    --color-surface-2: rgba(255, 255, 255, 0.75);
+    --color-overlay: rgba(0, 0, 0, 0.06);
+
+    --color-text: #0F172A;
+    --color-muted: #475569;
+
+    --color-primary: #4F46E5;
+    --color-primary-hover: #4338CA;
+    --color-primary-contrast: #FFFFFF;
+
+    --color-accent: #06B6D4;
+    --color-accent-hover: #0891B2;
+    --color-accent-contrast: #0F172A;
+
+    --color-gray-dark: #E2E8F0;
+    --color-gray-medium: #CBD5E1;
+    --color-gray-light: #94A3B8;
+
+    --border-hairline: rgba(0, 0, 0, 0.10);
+    --border-hairline-highlight: rgba(255, 255, 255, 0.40);
+  }
+}
 @layer base {
   html {
     @apply bg-background text-foreground;

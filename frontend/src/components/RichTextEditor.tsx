@@ -1,4 +1,5 @@
 import React, { useRef } from 'react';
+import { sanitizeHTML } from '../utils/sanitizeHTML';
 
 interface RichTextEditorProps {
   content: string;
@@ -11,7 +12,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange }) =>
   const executeCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value);
     if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
+      onChange(sanitizeHTML(editorRef.current.innerHTML));
     }
   };
   
@@ -124,8 +125,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ content, onChange }) =>
         ref={editorRef}
         contentEditable
         className="p-4 min-h-[200px] max-h-[400px] overflow-y-auto bg-gray-dark text-white focus:outline-none"
-        dangerouslySetInnerHTML={{ __html: content }}
-        onInput={(e) => onChange((e.target as HTMLDivElement).innerHTML)}
+        dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }}
+        onInput={(e) => onChange(sanitizeHTML((e.target as HTMLDivElement).innerHTML))}
         onPaste={handlePaste}
         style={{
           lineHeight: '1.6',

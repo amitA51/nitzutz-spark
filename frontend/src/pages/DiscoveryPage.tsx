@@ -1,18 +1,19 @@
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback, Suspense, lazy } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, useMotionValue, useTransform, AnimatePresence, type PanInfo } from 'framer-motion';
 import PageTransition from '../components/PageTransition';
-import ArticleCard from '../components/ArticleCard';
-import KeyTakeaways from '../components/KeyTakeaways';
-import ConnectionsSidebar from '../components/ConnectionsSidebar';
-import SpacedRepetitionPrompt from '../components/SpacedRepetitionPrompt';
+// Lazy-loaded heavy components
+const ArticleCard = lazy(() => import('../components/ArticleCard'));
+const KeyTakeaways = lazy(() => import('../components/KeyTakeaways'));
+const ConnectionsSidebar = lazy(() => import('../components/ConnectionsSidebar'));
+const SpacedRepetitionPrompt = lazy(() => import('../components/SpacedRepetitionPrompt'));
+const MarkdownView = lazy(() => import('../components/MarkdownView'));
+const EmptyState = lazy(() => import('../components/EmptyState'));
 import { articlesAPI, type Article } from '../api/articles';
 import { savedArticlesAPI } from '../api/savedArticles';
 import apiClient from '../api/client';
 import Loader from '../components/Loader';
-import EmptyState from '../components/EmptyState';
 import { useToast } from '../components/Toast';
-
 // Using Article type from API layer
 
 const DiscoveryPage = () => {
@@ -174,12 +175,14 @@ const DiscoveryPage = () => {
     <div className="max-w-7xl mx-auto">
       {/* Spaced Repetition Prompt Modal */}
       {showRepetitionPrompt && repetitionArticle && (
-        <SpacedRepetitionPrompt
-          articleId={repetitionArticle.id}
-          articleTitle={repetitionArticle.title}
-          onClose={() => setShowRepetitionPrompt(false)}
-          onScheduled={() => addToast('חזרות תוזמנו', 'success')}
-        />
+        <Suspense fallback={<div className="card p-4"><p className="text-gray-400 text-sm">טוען חזרות...</p></div>}>
+          <SpacedRepetitionPrompt
+            articleId={repetitionArticle.id}
+            articleTitle={repetitionArticle.title}
+            onClose={() => setShowRepetitionPrompt(false)}
+            onScheduled={() => addToast('חזרות תוזמנו', 'success')}
+          />
+        </Suspense>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -324,22 +327,24 @@ const DiscoveryPage = () => {
                     dragConstraints={idx === 0 ? { left: 0, right: 0 } : undefined}
                     onDragEnd={idx === 0 ? onDragEnd : undefined}
                   >
-                    <ArticleCard article={a} />
+                    <Suspense fallback={<div className="card p-4 w-full"><p className="text-gray-400 text-sm">טוען כרטיס...</p></div>}>
+                      <ArticleCard article={a} />
+                    </Suspense>
                     {idx === 0 && (
-                      <>
-                        <motion.div
-                          className="absolute top-4 left-4 text-gradient font-bold text-lg font-sans"
-                          style={{ opacity: showSave }}
-                        >
-                          שמור
-                        </motion.div>
-                        <motion.div
-                          className="absolute top-4 right-4 text-gray-400 font-bold text-lg"
-                          style={{ opacity: showSkip }}
-                        >
-                          דלג
-                        </motion.div>
-                      </>
+                        <>
+                            <motion.div
+                                className="absolute top-4 left-4 text-gradient font-bold text-lg font-sans"
+                                style={{ opacity: showSave }}
+                            >
+                                שמור
+                            </motion.div>
+                            <motion.div
+                                className="absolute top-4 right-4 text-gray-400 font-bold text-lg"
+                                style={{ opacity: showSkip }}
+                            >
+                                דלג
+                            </motion.div>
+                        </>
                     )}
                   </motion.div>
                 ))}
@@ -495,11 +500,13 @@ const DiscoveryPage = () => {
               <h3 className="text-xl font-bold mb-2 font-sans">סיכום הסשן</h3>
               <p className="text-gray-400 mb-4 font-serif">סיימת לעבור על כל המאמרים בסשן הזה.</p>
               {deckArticles.length === 0 && (
-                <EmptyState
-                  icon={<span>🔍</span>}
-                  title={searchQuery || selectedCategory !== 'all' || readingLength !== 'all' ? 'לא נמצאו מאמרים' : 'אין מאמרים כרגע'}
-                  description={searchQuery || selectedCategory !== 'all' || readingLength !== 'all' ? 'נסה לשנות חיפוש או מסננים' : 'חזור מאוחר יותר לתוכן חדש'}
-                />
+                <Suspense fallback={<div className="card p-4"><p className="text-gray-400 text-sm">טוען מצב ריק...</p></div>}>
+                  <EmptyState
+                    icon={<span>🔍</span>}
+                    title={searchQuery || selectedCategory !== 'all' || readingLength !== 'all' ? 'לא נמצאו מאמרים' : 'אין מאמרים כרגע'}
+                    description={searchQuery || selectedCategory !== 'all' || readingLength !== 'all' ? 'נסה לשנות חיפוש או מסננים' : 'חזור מאוחר יותר לתוכן חדש'}
+                  />
+                </Suspense>
               )}
               {sessionSaved.length > 0 ? (
                 <div className="space-y-2">
@@ -550,7 +557,9 @@ const DiscoveryPage = () => {
                       className="overflow-hidden"
                     >
                       <div className="px-3 pb-3">
-                        <KeyTakeaways articleId={currentArticle.id} />
+                        <Suspense fallback={<div className="p-3 text-xs text-gray-500">טוען נקודות מפתח...</div>}>
+                          <KeyTakeaways articleId={currentArticle.id} />
+                        </Suspense>
                       </div>
                     </motion.div>
                   )}
@@ -585,7 +594,9 @@ const DiscoveryPage = () => {
                       className="overflow-hidden"
                     >
                       <div className="px-3 pb-3">
-                        <ConnectionsSidebar articleId={currentArticle.id} />
+                        <Suspense fallback={<div className="p-3 text-xs text-gray-500">טוען קשרים...</div>}>
+                          <ConnectionsSidebar articleId={currentArticle.id} />
+                        </Suspense>
                       </div>
                     </motion.div>
                   )}
@@ -643,7 +654,9 @@ const DiscoveryPage = () => {
                     transition={{ delay: idx * 0.1 }}
                   >
                     <p className="text-sm text-gradient font-sans font-semibold mb-1">ש: {response.question}</p>
-                    <div dangerouslySetInnerHTML={{ __html: response.answer.replace(/\n/g, '<br />') }} />
+                    <Suspense fallback={<div className="text-xs text-gray-500">טוען תשובה...</div>}>
+                      <MarkdownView markdown={response.answer} />
+                    </Suspense>
                   </motion.div>
                 ))
               ) : (

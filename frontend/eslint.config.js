@@ -19,5 +19,24 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // Disallow raw dangerouslySetInnerHTML usage anywhere.
+      // Use SafeHTML component instead.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
+          message:
+            'Do not use dangerouslySetInnerHTML. Use SafeHTML component instead.',
+        },
+      ],
+    },
+  },
+  // Allow the SafeHTML component to use dangerouslySetInnerHTML internally.
+  {
+    files: ['src/components/SafeHTML.tsx'],
+    rules: {
+      'no-restricted-syntax': 'off',
+    },
   },
 ])

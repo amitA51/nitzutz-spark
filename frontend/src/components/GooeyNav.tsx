@@ -34,6 +34,35 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
   const initialActiveIndex = items.findIndex(item => item.href === location.pathname);
   const [activeIndex, setActiveIndex] = useState<number>(initialActiveIndex !== -1 ? initialActiveIndex : 0);
 
+// Theme state and persistence (Preset A — Neo‑glassmorphism)
+const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+const applyTheme = (next: 'dark' | 'light') => {
+  const root = document.documentElement;
+  root.classList.remove('theme-dark', 'theme-light');
+  root.classList.add(next === 'dark' ? 'theme-dark' : 'theme-light');
+  localStorage.setItem('theme', next);
+  setTheme(next);
+};
+
+useEffect(() => {
+  try {
+    const stored = localStorage.getItem('theme');
+    const next =
+      stored === 'dark' || stored === 'light'
+        ? (stored as 'dark' | 'light')
+        : (window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light');
+    applyTheme(next);
+  } catch {
+    // Fallback when localStorage is unavailable
+    applyTheme('dark');
+  }
+}, []);
+
+const toggleTheme = () => applyTheme(theme === 'dark' ? 'light' : 'dark');
   useEffect(() => {
     const newIndex = items.findIndex(item => item.href === location.pathname);
     if (newIndex !== -1 && newIndex !== activeIndex) {
@@ -297,7 +326,7 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
         `}
       </style>
       <div className="relative" ref={containerRef}>
-        <nav className="flex relative" style={{ transform: 'translate3d(0,0,0.01px)' }}>
+        <nav className="flex relative items-center justify-between w-full" style={{ transform: 'translate3d(0,0,0.01px)' }}>
           <ul
             ref={navRef}
             className="flex gap-8 list-none p-0 px-4 m-0 relative z-[3]"
@@ -324,6 +353,16 @@ const GooeyNav: React.FC<GooeyNavProps> = ({
               </li>
             ))}
           </ul>
+
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-pressed={theme === 'dark'}
+            className="ml-4 inline-flex items-center gap-2 px-3 py-2 rounded-md bg-surface-1 text-foreground border border-[var(--border-hairline)] shadow-elevation-1 backdrop-blur-glass-sm transition-colors duration-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            title={theme === 'dark' ? 'Switch to Light theme' : 'Switch to Dark theme'}
+          >
+            <span className="text-sm">{theme === 'dark' ? 'Dark' : 'Light'}</span>
+          </button>
         </nav>
         <span className="effect filter" ref={filterRef} />
         <span className="effect text" ref={textRef} />
