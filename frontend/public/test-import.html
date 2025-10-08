@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בדיקת ייבוא מ-Google Drive</title>
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            direction: rtl;
+        }
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+        .result {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 בדיקת ייבוא מ-Google Drive</h1>
+    
+    <div>
+        <button onclick="checkStatus()">בדוק סטטוס חיבור</button>
+        <button onclick="listFiles()">הצג קבצים</button>
+        <button onclick="testImport()">נסה לייבא קובץ</button>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        const resultDiv = document.getElementById('result');
+
+        function showResult(data, isError = false) {
+            resultDiv.className = 'result ' + (isError ? 'error' : 'success');
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/google-drive/status`);
+                const data = await response.json();
+                showResult({ success: true, ...data });
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function listFiles() {
+            try {
+                const response = await fetch(`${API_BASE}/google-drive/files/recent`);
+                const data = await response.json();
+                showResult({ 
+                    success: true, 
+                    totalFiles: data.files.length,
+                    files: data.files.slice(0, 5).map(f => ({
+                        id: f.id,
+                        name: f.name,
+                        mimeType: f.mimeType
+                    }))
+                });
+            } catch (error) {
+                showResult({ error: error.message }, true);
+            }
+        }
+
+        async function testImport() {
+            try {
+                // First get a file
+                const filesResponse = await fetch(`${API_BASE}/google-drive/files/recent`);
+                const filesData = await filesResponse.json();
+                
+                const firstDoc = filesData.files.find(f => 
+                    f.mimeType === 'application/vnd.google-apps.document'
+                );
+
+                if (!firstDoc) {
+                    showResult({ error: 'לא נמצאו מסמכי Google Docs' }, true);
+                    return;
+                }
+
+                showResult({ status: `מייבא: ${firstDoc.name}...` });
+
+                // Try to import
+                const importResponse = await fetch(
+                    `${API_BASE}/google-drive/import-summary/${firstDoc.id}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            bookTitle: '',
+                            bookAuthor: '',
+                            tags: ['test']
+                        })
+                    }
+                );
+
+                const importData = await importResponse.json();
+                
+                if (importResponse.ok) {
+                    showResult({ 
+                        success: true,
+                        message: 'הייבוא הצליח!',
+                        bookTitle: importData.book.title,
+                        summaryId: importData.summary.id
+                    });
+                } else {
+                    showResult({ error: 'שגיאה בייבוא', details: importData }, true);
+                }
+            } catch (error) {
+                showResult({ error: error.message, stack: error.stack }, true);
+            }
+        }
+
+        // Auto check status on load
+        checkStatus();
+    </script>
+</body>
+</html>

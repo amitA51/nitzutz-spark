@@ -1,0 +1,443 @@
+openapi: 3.0.3
+info:
+  title: Nitzutz Spark AI Mentoring API
+  description: |
+    # 🚀 Nitzutz Spark API
+    
+    Enterprise-grade AI-powered personal learning and mentoring platform.
+    
+    ## 🔑 Authentication
+    Currently in single-user mode. Multi-user JWT authentication coming soon.
+    
+    ## 📊 Rate Limits
+    - **General API**: 1000 requests per 15 minutes
+    - **AI Endpoints**: 30 requests per 15 minutes
+    - **Auth Endpoints**: 10 requests per 15 minutes
+    
+    ## 🆘 Support
+    - **Email**: support@nitzutz-spark.com
+    - **Docs**: https://docs.nitzutz-spark.com
+    - **GitHub**: https://github.com/nitzutz-spark
+    
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api@nitzutz-spark.com
+    url: https://nitzutz-spark.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000/api
+    description: Development server
+  - url: https://api.nitzutz-spark.com/api
+    description: Production server
+  - url: https://staging-api.nitzutz-spark.com/api
+    description: Staging server
+
+tags:
+  - name: AI
+    description: AI-powered content generation and analysis
+  - name: Articles
+    description: Article management and discovery
+  - name: Books
+    description: Personal book library management
+  - name: Analytics
+    description: User behavior and content analytics
+  - name: Health
+    description: System health and monitoring
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: System health check
+      description: Returns the current health status of the API and its dependencies
+      operationId: getHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime:
+                    type: number
+                    description: Server uptime in seconds
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      ai_service:
+                        type: string
+                        enum: [healthy, unhealthy]
+                      cache:
+                        type: string
+                        enum: [healthy, unhealthy]
+              examples:
+                healthy:
+                  value:
+                    status: healthy
+                    timestamp: "2025-01-07T22:00:00Z"
+                    uptime: 123456
+                    checks:
+                      database: healthy
+                      ai_service: healthy
+                      cache: healthy
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ai/ask:
+    post:
+      tags:
+        - AI
+      summary: Ask AI about an article
+      description: |
+        Submit a question about an article and receive an AI-generated answer.
+        
+        ## 🤖 Supported Modes
+        - **normal**: Standard Q&A
+        - **devils-advocate**: Critical thinking mode - challenges assumptions
+        
+        ## 💡 Tips
+        - Be specific in your questions
+        - Reference specific parts of the article
+        - Use follow-up questions for deeper understanding
+      operationId: askAI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - articleId
+                - question
+              properties:
+                articleId:
+                  type: string
+                  format: uuid
+                  description: The ID of the article to ask about
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+                question:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                  description: Your question about the article
+                  example: "What are the main concepts discussed?"
+                model:
+                  type: string
+                  description: AI model to use (optional)
+                  example: "deepseek-ai/DeepSeek-V3.2-Exp"
+                mode:
+                  type: string
+                  enum: [normal, devils-advocate]
+                  default: normal
+                  description: AI interaction mode
+                categoryHint:
+                  type: string
+                  description: Category hint for better context
+                  example: "technology"
+            examples:
+              simple_question:
+                summary: Simple question
+                value:
+                  articleId: "123e4567-e89b-12d3-a456-426614174000"
+                  question: "What are the main concepts?"
+              devils_advocate:
+                summary: Critical thinking mode
+                value:
+                  articleId: "123e4567-e89b-12d3-a456-426614174000"
+                  question: "What are potential flaws in this argument?"
+                  mode: "devils-advocate"
+      responses:
+        '200':
+          description: AI response generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIQuestion'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Article not found
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+        '503':
+          description: AI service unavailable
+
+  /ai/extract-key-points:
+    post:
+      tags:
+        - AI
+      summary: Extract key points from article
+      description: Uses AI to extract 3-5 key takeaways from an article
+      operationId: extractKeyPoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - articleId
+              properties:
+                articleId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Key points extracted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  keyPoints:
+                    type: array
+                    items:
+                      type: string
+                    minItems: 3
+                    maxItems: 5
+                  articleId:
+                    type: string
+                    format: uuid
+
+  /articles:
+    get:
+      tags:
+        - Articles
+      summary: List all articles
+      description: Retrieve a paginated list of articles with optional filtering
+      operationId: getArticles
+      parameters:
+        - name: category
+          in: query
+          description: Filter by category
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Number of items to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of items to skip
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: sortBy
+          in: query
+          description: Sort field
+          schema:
+            type: string
+            enum: [createdAt, title, publishedAt]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          description: Sort order
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Articles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  articles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Article'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+    post:
+      tags:
+        - Articles
+      summary: Create new article
+      description: Add a new article to the library
+      operationId: createArticle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleInput'
+      responses:
+        '201':
+          description: Article created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+
+components:
+  schemas:
+    Article:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          type: string
+        sourceUrl:
+          type: string
+          format: uri
+        category:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        imageUrl:
+          type: string
+          format: uri
+        excerpt:
+          type: string
+        readTime:
+          type: integer
+          description: Estimated read time in minutes
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    
+    ArticleInput:
+      type: object
+      required:
+        - title
+        - content
+        - category
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        content:
+          type: string
+          minLength: 1
+        author:
+          type: string
+        sourceUrl:
+          type: string
+          format: uri
+        category:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        imageUrl:
+          type: string
+          format: uri
+    
+    AIQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        articleId:
+          type: string
+          format: uuid
+        question:
+          type: string
+        answer:
+          type: string
+        context:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+    
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Validation failed"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+    
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Too many requests"
+        retryAfter:
+          type: string
+          example: "15 minutes"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT authentication (coming soon)
+
+security: []
