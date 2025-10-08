@@ -11,4 +11,4 @@
 [build.environment]
   NODE_VERSION = "20"
   # This will be overridden by Netlify environment variables
-  VITE_API_URL = "https://nitzutz-backend-production-423f.up.railway.app/api"
+  VITE_API_URL = "https://nitzutz-spark-production.up.railway.app/api"
