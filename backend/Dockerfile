@@ -23,5 +23,5 @@ RUN npm run build
 # Expose port
 EXPOSE 5000
 
-# Start the server
-CMD ["npm", "run", "start"]
+# Start the server with database setup
+CMD ["sh", "-c", "npx prisma db push && npm run start"]
