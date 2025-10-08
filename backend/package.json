@@ -7,12 +7,15 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
+    "start:prod": "npx prisma db push --accept-data-loss && node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:migrate:deploy": "prisma db push",
+    "prisma:migrate:deploy": "npx prisma db push --accept-data-loss",
     "prisma:db:push": "prisma db push",
     "prisma:studio": "prisma studio",
-    "postinstall": "prisma generate",
+    "postinstall": "npx prisma generate",
+    "prebuild": "npx prisma generate",
+    "predeploy": "npx prisma db push --accept-data-loss",
     "smoke": "tsx scripts/smoke.ts"
   },
   "prisma": {
