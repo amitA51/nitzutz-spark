@@ -32,14 +32,14 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className="mb-8"
+      className="h-full flex flex-col"
     >
-      <SpotlightCard spotlightColor="rgba(59, 130, 246, 0.2)" className="bg-gray-dark border-gray-light p-8">
+      <SpotlightCard spotlightColor="rgba(59, 130, 246, 0.2)" className="bg-gray-dark border-gray-light p-6 h-full flex flex-col overflow-hidden">
         {/* Article Header */}
-        <div className="mb-6">
-          <div className="flex items-start justify-between mb-3">
+        <div className="flex-shrink-0 mb-4">
+          <div className="flex items-start justify-between mb-2">
             <motion.h2 
-              className="text-3xl font-bold text-white font-sans leading-tight"
+              className="text-2xl font-bold text-white font-sans leading-tight"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, duration: 0.4 }}
@@ -48,7 +48,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
             </motion.h2>
             {article.readTime && (
               <motion.span 
-                className="text-sm text-gray-400 whitespace-nowrap ml-4 font-sans"
+                className="text-sm text-gray-400 whitespace-nowrap ml-4 font-sans flex-shrink-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -59,39 +59,26 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
           </div>
           
           <motion.div 
-            className="flex items-center space-x-4 text-sm text-gray-400 font-sans"
+            className="flex items-center gap-3 text-sm text-gray-400 font-sans flex-wrap"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
           >
             {article.author && (
-              <span>מאת {article.author}</span>
+              <span className="flex items-center gap-1">
+                <span className="text-primary">✍️</span>
+                <span>מאת {article.author}</span>
+              </span>
             )}
-            <span className="px-2 py-1 bg-gradient-accent rounded text-white font-medium">
+            <span className="px-3 py-1 bg-gradient-accent rounded-full text-white font-medium text-xs shadow-md">
               {article.category}
             </span>
           </motion.div>
         </div>
         
-        {/* Article Image (if available) */}
-        {article.imageUrl && (
-          <motion.div 
-            className="mb-4 overflow-hidden rounded-lg"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-          >
-            <img 
-              src={article.imageUrl} 
-              alt={article.title}
-              className="w-full h-64 object-cover hover:scale-105 transition-transform duration-500"
-            />
-          </motion.div>
-        )}
-        
         {/* Divider */}
         <motion.div 
-          className="border-t border-gradient-accent/30 my-6"
+          className="border-t border-gradient-accent/30 my-3 flex-shrink-0"
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
@@ -100,37 +87,47 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
         {/* Article Excerpt */}
         {article.excerpt && (
           <motion.div 
-            className="mb-6 p-4 bg-gradient-to-r from-blue-900/10 to-purple-900/10 rounded-lg border-r-4 border-primary"
+            className="mb-3 p-3 bg-gradient-to-r from-blue-900/20 to-purple-900/20 rounded-lg border-r-4 border-primary flex-shrink-0"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <p className="text-gray-200 font-serif text-lg leading-relaxed italic">
-              "עיקרי המאמר: {article.excerpt}"
+            <p className="text-gray-200 font-serif text-sm leading-relaxed italic line-clamp-2">
+              💡 {article.excerpt}
             </p>
           </motion.div>
         )}
         
-        {/* Article Content */}
+        {/* Article Content - Scrollable */}
         <motion.div 
-          className="prose prose-invert max-w-none"
+          className="flex-1 overflow-y-auto min-h-0 mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          <p className="text-gray-300 whitespace-pre-wrap font-serif text-base leading-relaxed tracking-wide">{display}</p>
-          {shouldTruncate && (
-            <div className="mt-4">
-              <GradientButton
-                onClick={() => setExpanded(!expanded)}
-                variant="primary"
-                size="sm"
-              >
-                {expanded ? 'הצג פחות' : 'קרא עוד'}
-              </GradientButton>
-            </div>
-          )}
+          <div className="prose prose-invert max-w-none pr-2">
+            <p className="text-gray-300 whitespace-pre-wrap font-serif text-sm leading-relaxed">{display}</p>
+          </div>
         </motion.div>
+        
+        {/* Read More Button - Always Visible at Bottom */}
+        {shouldTruncate && (
+          <motion.div 
+            className="flex-shrink-0 pt-3 border-t border-gray-light/30 bg-gradient-to-t from-gray-dark via-gray-dark to-transparent"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <GradientButton
+              onClick={() => setExpanded(!expanded)}
+              variant="primary"
+              size="sm"
+              className="w-full"
+            >
+              {expanded ? '▲ הצג פחות' : '▼ קרא עוד'}
+            </GradientButton>
+          </motion.div>
+        )}
       </SpotlightCard>
     </motion.div>
   );
