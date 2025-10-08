@@ -10,7 +10,9 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "prisma:db:push": "prisma db push",
     "prisma:studio": "prisma studio",
+    "postinstall": "prisma generate",
     "smoke": "tsx scripts/smoke.ts"
   },
   "prisma": {
@@ -24,7 +26,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.7.0",
+    "@prisma/client": "^6.17.0",
     "axios": "^1.12.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
@@ -46,7 +48,7 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.10.5",
     "@types/node-cron": "^3.0.11",
-    "prisma": "^5.7.0",
+    "prisma": "^6.17.0",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.3.3"
